@@ -9,8 +9,7 @@ const App = () => {
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
-    if (saved) return saved === 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return saved === 'dark';
   });
 
   useEffect(() => {
@@ -105,7 +104,7 @@ const App = () => {
       clearInterval(interval)
     }
     return () => clearInterval(interval)
-  }, [isPlaying, currentSongIndex])
+  }, [isPlaying, currentSongIndex, songPlaylist.length])
 
   // 🌀 2. Chaos Page State & Board Items
   const [boardItems, setBoardItems] = useState([
@@ -265,10 +264,24 @@ const App = () => {
         </div>
         
         <div className="navbar-actions">
+          <button className="navbar-icon-btn" title="Memories & Affection" aria-label="Heart">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+          </button>
+
+          <button className="navbar-icon-btn" title="Settings" aria-label="Settings">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+
           <button 
-            className="navbar-icon-btn" 
+            className="navbar-icon-btn theme-toggle-btn" 
             onClick={() => setIsDarkMode(!isDarkMode)}
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            title={isDarkMode ? "Switch to Warm Light Theme" : "Switch to Low-Light Dark Theme"}
+            aria-label="Toggle Theme"
           >
             {isDarkMode ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -307,7 +320,7 @@ const App = () => {
       {currentPage === 'home' && (
         <>
           <header className="main-header">
-            <div className="label-caps" style={{ marginBottom: '1rem' }}>A Shared Archive</div>
+            <div className="label-caps" style={{ marginBottom: '1rem' }}>Harvey & Mony</div>
             <h1 className="header-title">Pieces of Us</h1>
             <p className="header-subtitle">
               "A digital collection of quiet moments, handwritten scraps, and late-night soundtracks."
@@ -345,7 +358,7 @@ const App = () => {
               </div>
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 1 • THE SOUNDTRACK</div>
+                <div className="label-caps">SOUNDTRACK</div>
                 <h2 className="chapter-title">Songs We Played in the Dark</h2>
                 
                 <div className="accent-card">
@@ -375,7 +388,7 @@ const App = () => {
             <div className="chapter-grid alt">
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 2 • COFFEE SHOP CORNER</div>
+                <div className="label-caps">Bitter</div>
                 <h2 className="chapter-title">Hours Lost in Ceramic Mugs</h2>
                 
                 <div className="accent-card">
@@ -428,7 +441,7 @@ const App = () => {
               </div>
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 3 • SWEETS</div>
+                <div className="label-caps">SWEETS</div>
                 <h2 className="chapter-title">Folded Notes & Sweet Reminders</h2>
                 
                 <div className="accent-card">
@@ -458,7 +471,7 @@ const App = () => {
             <div className="chapter-grid alt">
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 4 • DRAFTS</div>
+                <div className="label-caps">DRAFTS</div>
                 <h2 className="chapter-title">The Unfinished Pages</h2>
                 
                 <div className="accent-card">
@@ -507,7 +520,7 @@ const App = () => {
           </div>
 
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
-            <div className="label-caps">CHAPTER 1</div>
+            <div className="label-caps">Our favorite songs</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Soundtrack</h1>
             <p className="header-subtitle">"Every moment we shared has its own groove, pressed in dusty wax."</p>
           </div>
@@ -687,7 +700,7 @@ const App = () => {
           </div>
 
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
-            <div className="label-caps">CHAPTER 2</div>
+            <div className="label-caps">Bitter Moments</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Messy Board</h1>
             <p className="header-subtitle">"Doodles on napkins, sticky memos, overlapping paper. Chaos preserved."</p>
           </div>
@@ -753,12 +766,12 @@ const App = () => {
                   {/* 1. STICKY NOTE ITEM */}
                   {item.type === 'sticky' && (
                     <div className={`sticky-note-item ${item.color}`}>
-                      <p className="script-text" style={{ fontSize: '1.5rem', lineHeight: '1.25', color: '#3A3830' }}>
+                      <p className="script-text sticky-note-text" style={{ fontSize: '1.5rem', lineHeight: '1.25' }}>
                         "{item.text}"
                       </p>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', borderTop: '1px dashed rgba(0,0,0,0.06)', paddingTop: '0.4rem' }}>
-                        <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#8A857A' }}>Scrap note</span>
-                        <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: '#8A857A' }}>{item.date}</span>
+                      <div className="sticky-note-footer">
+                        <span className="sticky-note-meta" style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>Scrap note</span>
+                        <span className="sticky-note-meta" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{item.date}</span>
                       </div>
                     </div>
                   )}
@@ -836,7 +849,7 @@ const App = () => {
           </div>
 
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
-            <div className="label-caps">CHAPTER 3</div>
+            <div className="label-caps">Sweet Moments</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Jar of Notes</h1>
             <p className="header-subtitle">"A clean grid of folded notes, and an old jar holding quiet kindnesses."</p>
           </div>
@@ -898,13 +911,13 @@ const App = () => {
 
                   {/* Back (Revealed Note) */}
                   <div className="flip-card-back">
-                    <span className="script-text" style={{ fontSize: '1.95rem', color: '#443F3A', lineHeight: '1.3', textAlign: 'center' }}>
+                    <span className="script-text" style={{ fontSize: '1.95rem', color: 'var(--flip-quote-color)', lineHeight: '1.3', textAlign: 'center' }}>
                       "{currentRandomNote}"
                     </span>
                     <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
                       <button 
                         className="cta-button" 
-                        style={{ padding: '0.4rem 1rem', fontSize: '0.7rem', backgroundColor: 'var(--bone)' }}
+                        style={{ padding: '0.4rem 1rem', fontSize: '0.7rem', backgroundColor: 'var(--bone)', color: 'var(--dark-text)' }}
                         onClick={() => setIsFlipped(false)}
                       >
                         Fold back
@@ -955,8 +968,8 @@ const App = () => {
           </div>
 
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
-            <div className="label-caps">CHAPTER 4</div>
-            <h1 className="header-title" style={{ fontSize: '3.5rem', color: '#403C39' }}>The Open Notebook</h1>
+            <div className="label-caps">Random Thoughts</div>
+            <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Open Notebook</h1>
             <p className="header-subtitle">"Desaturated tones, scratched sentences, cut-off lines. Raw thoughts left unsent."</p>
           </div>
 
@@ -1008,11 +1021,8 @@ const App = () => {
       {/* Consistent Footer */}
       <footer className="main-footer">
         <div className="footer-script script-text">Pieces of us</div>
-        <p style={{ fontSize: '0.8rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Privacy / Archive / Contact
-        </p>
         <p style={{ fontSize: '0.75rem', color: 'var(--highlight)', marginTop: '0.5rem' }}>
-          Made with love, scrap paper, and coffee. © 2026
+          Digital Memories of Harvey & Mony
         </p>
       </footer>
 
