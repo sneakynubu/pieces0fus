@@ -14,6 +14,17 @@
   --font-script: 'Caveat', cursive;
 }
 
+body.dark-mode {
+  --parchment: #1A1917;
+  --bone: #2D2A27;
+  --linen: #242220;
+  --almond-cream: #2F2B28;
+  --almond-silk: #3D3631;
+  --dark-text: #E6E1D6;
+  --muted-text: #A69F92;
+  --highlight: #D1B8A8;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -191,11 +202,6 @@ h1, h2, h3, h4 {
 .navbar-icon-btn:hover {
   color: var(--dark-text);
   background-color: var(--linen);
-}
-
-.navbar-icon-btn.heart-active {
-  color: #D88C8C;
-  transform: scale(1.1);
 }
 
 /* Breadcrumb Styling */
@@ -1019,4 +1025,70 @@ h1, h2, h3, h4 {
   position: absolute;
   pointer-events: none;
   opacity: 0.12;
+}
+
+/* Dark Mode Component Adjustments */
+body.dark-mode .top-navbar {
+  background-color: rgba(26, 25, 23, 0.9);
+}
+
+body.dark-mode .polaroid {
+  background: #2D2A27;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .polaroid-img-frame {
+  background-color: #1A1917;
+}
+
+body.dark-mode .polaroid-caption {
+  color: var(--dark-text);
+}
+
+body.dark-mode .accent-card {
+  background-color: var(--linen);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .notebook-spread {
+  background-color: #242220;
+}
+
+body.dark-mode .taped-scrap {
+  background-color: #2D2A27;
+}
+
+body.dark-mode .flip-card-back {
+  background-color: #2D2A27;
+  border-color: var(--bone);
+}
+
+body.dark-mode .sticky-note-item {
+  background-color: #3D3B30; /* Desaturated dark yellow */
+  box-shadow: 3px 8px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .sticky-note-item p {
+  color: #E6E1D6 !important;
+}
+
+body.dark-mode .sticky-note-item span {
+  color: #A69F92 !important;
+}
+
+body.dark-mode .sticky-note-item.pink {
+  background-color: #3D3030;
+}
+
+body.dark-mode .sticky-note-item.blue {
+  background-color: #2D353D;
+}
+
+body.dark-mode .pin-textarea {
+  background-color: #2D2A27;
+  color: var(--dark-text);
+}
+
+body.dark-mode .song-card.playing {
+  background-color: #2D2A27;
 }

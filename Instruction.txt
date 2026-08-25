@@ -1,0 +1,75 @@
+Design a complete website called "Pieces of Us" — a warm, nostalgic digital scrapbook/memory archive for two people. It should feel like flipping through a handmade journal, not a typical app. Below is the full design system and every page needed. Please generate all screens in one cohesive style.
+
+COLOR PALETTE (use exactly these):
+
+Parchment 
+#EDEDE9 — main background
+Bone 
+#D6CCC2 — secondary surfaces/cards
+Linen 
+#F5EBE0 — soft accent card backgrounds (quotes, notes)
+Almond Cream 
+#E3D5CA — hover states, subtle accents
+Almond Silk 
+#D5BDAF — buttons, highlights, active states
+
+TYPOGRAPHY:
+
+Elegant serif for headings (e.g. "The Soundtrack")
+Handwritten/script font for quotes and emotional emphasis
+Small-caps sans-serif for labels (e.g. "CHAPTER 1")
+Soft, muted sans-serif for body copy
+
+OVERALL MOOD: Intimate, slow, tactile, editorial scrapbook aesthetic. Rounded corners, soft shadows, dotted horizontal dividers between sections, polaroid/collage-style imagery, generous whitespace.
+
+NAVIGATION (persistent across all pages):
+Top bar with "Pieces of Us" logo on the left, center nav links — Songs / Chaos / Sweets / Drafts — and settings + heart icons on the right. Highlight the active section in the nav.
+
+PAGE 1 — Homepage
+
+Hero section: Serif headline "A digital heirloom," followed by a script subline "preserving the fleeting." Below, a short muted description: "Scroll slowly. This is a collection of fragments, notes, and quiet moments saved from the rush of days. A scrapbook built of pixels, meant to be felt as much as seen." A small downward arrow beneath, inviting scroll.
+Chapter 1 — The Soundtrack (Songs): Left-aligned polaroid-style photo (rounded corners, white border, handwritten caption like "Sunday Morning Grooves") of a record player scene. Right side: "CHAPTER 1" label with music icon, bold serif title "The Soundtrack," a Linen quote card with script text like "And in that quiet beat between the chorus and the verse, I thought of you," a short description ("Playlists woven together from late-night drives and rainy Sunday mornings..."), and a pill CTA button "Listen to the Archive."
+Chapter 2 — Beautiful Chaos: Mirrored layout — text on left, circular cropped collage/moodboard image on right (mixed photos, pressed flowers, sticky notes). "CHAPTER 2" label with a sparkle/scatter icon, title "Beautiful Chaos," Linen quote card, description about "the blurred photos, the half-finished thoughts, the beautiful mess of being together," CTA button "Sift through the messy notes."
+Chapter 3 — Sweets: Left photo of a warm, softly-lit jar filled with small folded notes, tied with twine, dried flowers nearby. Right: "CHAPTER 3" label with a heart/cookie icon, title "Sweets," Linen quote card ("The smallest notes carry the most weight when they come from you"), description about "gentle reminders, soft compliments, and tiny gestures," CTA button "Read the Sweet Notes."
+Chapter 4 — Drafts: Mirrored — text left, image right of an open handwritten journal/notebook on a wooden desk with scattered polaroids and mugs. "CHAPTER 4" label with a pencil icon, title "Drafts," Linen quote card with a trailing/unfinished quote ("I wanted to tell you about the rain today... how the light caught the..."), description about "raw, unpolished, honest" unsent letters, CTA button "Open the Unfinished Pages."
+Footer: Centered links — Privacy / Archive / Contact — with "Made with love" beneath.
+
+PAGE 2 — Songs
+
+Breadcrumb "← Back to Pieces of Us" at top
+Optional mock music player bar (album art thumbnail, play button, track name) in Almond Silk
+Grid/list of playlist entries: album art thumbnail, song title, artist, and a short handwritten-style note explaining why the song matters
+Same footer as homepage
+
+PAGE 3 — Chaos
+
+Breadcrumb at top
+Masonry/moodboard-style grid mixing photos, sticky notes, torn paper snippets, doodles
+Cards slightly rotated at varied angles for an organic, "pinned-to-a-board" feel — deliberately messier than the other pages
+Same footer
+
+PAGE 4 — Sweets
+
+Breadcrumb at top
+Warm grid of folded note/letter cards, each holding a short sweet message
+Optional "pick a random note" interactive flip-card element
+Soft, gentle spacing; warm close-up photography style
+Same footer
+
+PAGE 5 — Drafts
+
+Breadcrumb at top
+Open notebook/journal layout — entries styled like handwritten pages with torn edges
+Some entries shown as "unsent letters," slightly faded, occasionally cut off mid-sentence for a raw, unfinished feel
+Slightly more muted/desaturated palette than the other 3 pages to contrast the warmth elsewhere
+Same footer
+
+GENERAL RULES ACROSS ALL PAGES:
+
+Keep spacing, font sizes, button styles, and corner radius fully consistent across every page
+Hover states use Almond Silk
+Fully mobile-responsive, stacking to single column on smaller screens
+Dotted divider lines separate major sections
+Consistent footer everywhere: Privacy / Archive / Contact, "Made with love"
+
+Please generate the homepage first in full detail, then the 4 sub-pages, maintaining one unified design system throughout.
