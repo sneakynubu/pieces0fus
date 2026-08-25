@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+import soundtrackImg from './images/Soundtracks.jpg'
+import chaosImg from './images/Chaos.jpg'
+import sweetsImg from './images/Sweets.jpg'
+import draftsImg from './images/Drafts.jpg'
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home')
@@ -330,24 +334,11 @@ const App = () => {
               <div className="chapter-image-container">
                 <div className="polaroid">
                   <div className="polaroid-img-frame">
-                    <svg className="scrapbook-svg" viewBox="0 0 400 400" fill="none">
-                      <rect width="400" height="400" fill="#201A18"/>
-                      <path d="M0 0H400V240H0V0Z" fill="url(#duskSkyHome)"/>
-                      <circle cx="200" cy="240" r="120" fill="#E88C6A" opacity="0.4" filter="blur(20px)"/>
-                      <path d="M-50 240L50 180L180 220L280 170L450 240H-50Z" fill="#130D0C"/>
-                      <rect x="0" y="240" width="400" height="160" fill="#0C0807"/>
-                      <circle cx="200" cy="380" r="140" fill="#1A1311" stroke="#2C211E" strokeWidth="4"/>
-                      <rect x="160" y="280" width="80" height="30" rx="3" fill="#3D1D13"/>
-                      <rect x="175" y="290" width="50" height="10" rx="1" fill="#FF8D60" opacity="0.8"/>
-                      <defs>
-                        <linearGradient id="duskSkyHome" x1="200" y1="0" x2="200" y2="240" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#352639"/>
-                          <stop offset="0.5" stopColor="#6C394F"/>
-                          <stop offset="0.85" stopColor="#B35850"/>
-                          <stop offset="1" stopColor="#E88C6A"/>
-                        </linearGradient>
-                      </defs>
-                    </svg>
+                    <img 
+                      src={soundtrackImg} 
+                      alt="The Soundtrack - Record Player" 
+                      className="chapter-cover-img" 
+                    />
                   </div>
                   <div className="polaroid-caption">August '24 — dashboard dusk</div>
                 </div>
@@ -407,139 +398,97 @@ const App = () => {
 
               <div className="chapter-image-container">
                 <div className="circular-collage">
-                  <div className="circular-inner">
-                    <svg className="scrapbook-svg" viewBox="0 0 400 400" fill="none">
-                      <rect width="400" height="400" fill="#F4EBE1"/>
-                      <path d="M0 100H400M0 200H400M0 300H400" stroke="#E3D5CA" strokeWidth="1" strokeDasharray="5 5"/>
-                      <path d="M100 0V400M200 0V400M300 0V400" stroke="#E3D5CA" strokeWidth="1" strokeDasharray="5 5"/>
-                      <path d="M200 0V80" stroke="#8C7A6B" strokeWidth="2"/>
-                      <ellipse cx="200" cy="85" rx="25" ry="10" fill="#A89280"/>
-                      <path d="M190 85Q160 110 130 115" stroke="#5D735E" strokeWidth="3" strokeLinecap="round" fill="none"/>
-                      <path d="M200 85Q210 130 190 160" stroke="#5D735E" strokeWidth="3" strokeLinecap="round" fill="none"/>
-                      <rect x="230" y="120" width="130" height="180" rx="4" fill="#D2E3EB" stroke="#8C7A6B" strokeWidth="6"/>
-                      <path d="M295 120V300" stroke="#8C7A6B" strokeWidth="4"/>
-                      <path d="M40 330C40 280 180 280 180 330H40Z" fill="#D5BDAF"/>
-                      <rect x="85" y="250" width="40" height="30" rx="6" fill="#CBBBB0"/>
-                      <path d="M125 258C132 258 132 272 125 272" stroke="#CBBBB0" strokeWidth="3" fill="none"/>
-                    </svg>
-                  </div>
+                  <img 
+                    src={chaosImg} 
+                    alt="Chapter 2 - Chaos Moodboard" 
+                    className="chapter-cover-img" 
+                  />
                 </div>
               </div>
 
             </div>
           </section>
 
-          {/* CHAPTER 3 PREVIEW: THE TRAIN TICKETS */}
+          {/* CHAPTER 3 PREVIEW: SWEETS */}
           <hr className="chapter-divider" />
           <section className="chapter-section">
             <div className="chapter-grid">
               
               <div className="chapter-image-container">
-                <div className="ticket-stub">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', letterSpacing: '0.1em', color: 'var(--highlight)' }}>EXPRESS SERVICE</span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: '600', color: 'var(--muted-text)' }}>NO. 082526</span>
+                <div className="polaroid" style={{ transform: 'rotate(2.5deg)' }}>
+                  <div className="polaroid-img-frame">
+                    <img 
+                      src={sweetsImg} 
+                      alt="Chapter 3 - Sweets Folded Notes Jar" 
+                      className="chapter-cover-img" 
+                    />
                   </div>
-                  <div style={{ borderTop: '1px dotted var(--almond-silk)', margin: '0.5rem 0' }}></div>
-                  <div style={{ display: 'flex', flexGrow: 1, gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ width: '90px', height: '110px', overflow: 'hidden', borderRadius: '8px', border: '2px solid var(--almond-silk)' }}>
-                      <svg viewBox="0 0 100 120" fill="none" style={{ width: '100%', height: '100%' }}>
-                        <rect width="100" height="120" fill="#2E2D30"/>
-                        <path d="M0 0H100V80H0V0Z" fill="#F0DFD5"/>
-                        <circle cx="50" cy="55" r="22" fill="#EAD5C5" opacity="0.8"/>
-                        <path d="M-10 80Q30 45 70 70Q90 60 120 80Z" fill="#918176" opacity="0.7"/>
-                        <path d="M-10 80Q20 60 50 75Q80 55 110 80Z" fill="#6B5C52"/>
-                        <rect x="0" y="80" width="100" height="40" fill="#40342C"/>
-                        <line x1="0" y1="100" x2="100" y2="100" stroke="#7A685D" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                    <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                      <div style={{ fontSize: '0.6rem', color: 'var(--highlight)', fontWeight: 'bold' }}>BOARDING PASS</div>
-                      <div style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: 'var(--dark-text)', lineHeight: '1' }}>WEEKEND ESCAPE</div>
-                    </div>
-                  </div>
-                  <div style={{ borderTop: '1px dotted var(--almond-silk)', margin: '0.5rem 0' }}></div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span className="script-text" style={{ fontSize: '1.25rem', color: 'var(--highlight)' }}>Keep this scrap.</span>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 'bold', color: 'var(--dark-text)', background: 'var(--almond-cream)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>VALID 1 WAY</span>
-                  </div>
+                  <div className="polaroid-caption">A jar of quiet folded warmth</div>
                 </div>
               </div>
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 3 • THE TRAIN TICKETS</div>
-                <h2 className="chapter-title">The Rattle of the Tracks</h2>
+                <div className="label-caps">CHAPTER 3 • SWEETS</div>
+                <h2 className="chapter-title">Folded Notes & Sweet Reminders</h2>
                 
                 <div className="accent-card">
                   <span className="script-text" style={{ color: 'var(--highlight)', display: 'block', marginBottom: '0.5rem' }}>
-                    "With nothing but a single bag and a horizon..."
+                    "The smallest notes carry the most weight when they come from you..."
                   </span>
                   <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--muted-text)' }}>
-                    We bought tickets on a whim, chased the coastline, and let the rhythmic click-clack of the tracks soothe our cluttered minds.
+                    Gentle reminders, soft compliments, and tiny gestures left behind on mirrors, napkins, and book margins.
                   </p>
                 </div>
 
                 <p className="chapter-paragraph">
-                  There is a beautiful honesty in trains. No steering, no traffic, just sitting hand-in-hand while the coastal fog sweeps over hemlock trees and sleepy whistle-stops.
+                  Little scraps tucked into coat pockets, sticky notes left on the coffee machine, and folded letters meant to make rainy days softer. A jar of reminders that you are cherished.
                 </p>
                 
-                <button className="cta-button" onClick={() => navigateTo('drafts')}>
-                  Trace the route
+                <button className="cta-button" onClick={() => navigateTo('sweets')}>
+                  Read the sweet notes
                 </button>
               </div>
 
             </div>
           </section>
 
-          {/* CHAPTER 4 PREVIEW: THE MIDNIGHT KITCHEN */}
+          {/* CHAPTER 4 PREVIEW: DRAFTS */}
           <hr className="chapter-divider" />
           <section className="chapter-section">
             <div className="chapter-grid alt">
 
               <div className="chapter-text-container">
-                <div className="label-caps">CHAPTER 4 • MIDNIGHT KITCHEN</div>
-                <h2 className="chapter-title">Flour Dust and Candlelight</h2>
+                <div className="label-caps">CHAPTER 4 • DRAFTS</div>
+                <h2 className="chapter-title">The Unfinished Pages</h2>
                 
                 <div className="accent-card">
                   <span className="script-text" style={{ color: 'var(--highlight)', display: 'block', marginBottom: '0.5rem' }}>
-                    "Laughter in the kitchen, flour on our cheeks, at 2 AM..."
+                    "I wanted to tell you about the rain today... how the light caught the dust dancing..."
                   </span>
                   <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--muted-text)' }}>
-                    The best meals weren't eaten at fancy restaurants. They were cooked in wool socks, with vintage jazz on the radio and a candle flickering on the stove.
+                    Raw, unpolished, and honest unsent letters, midnight margin thoughts, and scratchpad scribbles.
                   </p>
                 </div>
 
                 <p className="chapter-paragraph">
-                  Midnight impulses that turned into maple syrup feasts. We burned the first toast, spilled the milk, and sat cross-legged on the linoleum floor, completely happy.
+                  Things left unsaid, quiet reflections recorded on late journeys, and sentences abandoned halfway because the feeling was already understood between us.
                 </p>
                 
-                <button className="cta-button" onClick={() => navigateTo('sweets')}>
-                  Open the drawer
+                <button className="cta-button" onClick={() => navigateTo('drafts')}>
+                  Open the unfinished pages
                 </button>
               </div>
 
               <div className="chapter-image-container">
-                <div className="taped-scrap">
-                  <div className="scotch-tape"></div>
-                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    <span className="label-caps" style={{ color: 'var(--highlight)', fontSize: '0.65rem' }}>RECIPE SCROLL</span>
-                    <h3 style={{ fontSize: '1.6rem', fontFamily: 'var(--font-serif)', marginTop: '0.2rem' }}>Sweet Brioche Toast</h3>
+                <div className="polaroid" style={{ transform: 'rotate(-2deg)' }}>
+                  <div className="polaroid-img-frame">
+                    <img 
+                      src={draftsImg} 
+                      alt="Chapter 4 - Drafts Notebook & Unsent Letters" 
+                      className="chapter-cover-img" 
+                    />
                   </div>
-                  <div style={{ height: '120px', width: '100%', margin: '0.5rem 0' }}>
-                    <svg viewBox="0 0 300 120" fill="none" style={{ width: '100%', height: '100%' }}>
-                      <line x1="10" y1="100" x2="290" y2="100" stroke="var(--bone)" strokeWidth="1.5"/>
-                      <rect x="50" y="55" width="25" height="45" rx="3" fill="#EAD5C5" stroke="var(--almond-silk)" strokeWidth="1.5"/>
-                      <line x1="62.5" y1="55" x2="62.5" y2="50" stroke="#8C7A6B" strokeWidth="1.5"/>
-                      <path d="M62.5 50C60 45 62.5 38 62.5 38C62.5 38 65 45 62.5 50Z" fill="#FCAE68" opacity="0.9"/>
-                      <ellipse cx="170" cy="98" rx="45" ry="12" fill="#F4EBE1" stroke="var(--bone)" strokeWidth="1.5"/>
-                      <path d="M145 92C145 80 155 74 165 74C175 74 185 80 185 92" fill="#E9C197" stroke="#9A724B" strokeWidth="1.5"/>
-                    </svg>
-                  </div>
-                  <div style={{ marginTop: '0.75rem', borderTop: '1px dashed var(--bone)', paddingTop: '0.5rem' }}>
-                    <div className="script-text" style={{ fontSize: '1.25rem', textAlign: 'center', color: 'var(--muted-text)' }}>
-                      "Add a spoonful of honey for sweet dreams."
-                    </div>
-                  </div>
+                  <div className="polaroid-caption">Unsent pages & late margins</div>
                 </div>
               </div>
 
