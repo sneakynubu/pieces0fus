@@ -318,10 +318,10 @@ const App = () => {
           <section className="intro-section">
             <div className="intro-content">
               <p className="intro-quote script-text" style={{ fontSize: '2.45rem', color: 'var(--highlight)', marginBottom: '1.5rem' }}>
-                "We collect these quiet fragments so we don't forget how the morning light felt..."
+                "A quiet home for the things we couldn't throw away."
               </p>
               <p className="chapter-paragraph" style={{ margin: '0 auto', textAlign: 'center', fontSize: '1.1rem' }}>
-                This website is an act of preservation. An archive of the small, unnoticed beats of our lives together—the songs we replayed until they wore thin, the coffee corners we claimed, the ticket stubs we couldn't throw away, and the late-night kitchen talks.
+                This space holds the beats of our life together. The songs that defined our moments, the sweet times worth keeping, the arguments that taught us lessons, and the raw drafts of our thoughts.
               </p>
             </div>
           </section>
@@ -346,19 +346,19 @@ const App = () => {
 
               <div className="chapter-text-container">
                 <div className="label-caps">SOUNDTRACK</div>
-                <h2 className="chapter-title">Songs We Played in the Dark</h2>
+                <h2 className="chapter-title">Songs We Sang</h2>
                 
                 <div className="accent-card">
                   <span className="script-text" style={{ color: 'var(--highlight)', display: 'block', marginBottom: '0.5rem' }}>
-                    "And in that quiet beat, we found our rhythm..."
+                    "Singing along without a care..."
                   </span>
                   <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--muted-text)' }}>
-                    A handpicked list of tracks that defined our summers, our drives, and the silence in between.
+                    Loud choruses, late-night drives, and shared headphones.
                   </p>
                 </div>
 
                 <p className="chapter-paragraph">
-                  These are the tracks that still smell like highway rain, dust dancing in warm headlights, and the quiet comfort of driving with nowhere to go. They were taped off the radio or queued up in half-asleep shifts.
+                  Every song here carries a memory. They are the tunes we played until we knew every word and sang together whenever they came on.
                 </p>
                 
                 <button className="cta-button" onClick={() => navigateTo('songs')}>
@@ -376,19 +376,19 @@ const App = () => {
 
               <div className="chapter-text-container">
                 <div className="label-caps">Bitter</div>
-                <h2 className="chapter-title">Hours Lost in Ceramic Mugs</h2>
+                <h2 className="chapter-title">Cold Coffee & Hard Silence</h2>
                 
                 <div className="accent-card">
                   <span className="script-text" style={{ color: 'var(--highlight)', display: 'block', marginBottom: '0.5rem' }}>
-                    "Table four, under the hanging fern, where time stood still..."
+                    " When things got heavy.... " 
                   </span>
                   <p style={{ fontSize: '0.95rem', fontStyle: 'italic', color: 'var(--muted-text)' }}>
-                    We came for the espresso, but we stayed for the rain against the glass and the secrets scribbled on paper napkins.
+                    The arguments that left a mark.
                   </p>
                 </div>
 
                 <p className="chapter-paragraph">
-                  We wrote our grandest plans on stained paper napkins using a leaking pen. It was in that cozy corner where we figured out how to slow down, watching the world stream past outside the foggy windowpane.
+                  A real record of us—the bad times, the misunderstandings, and the bitter moments we eventualy outgrew.
                 </p>
                 
                 <button className="cta-button" onClick={() => navigateTo('chaos')}>
@@ -441,7 +441,7 @@ const App = () => {
                 </div>
 
                 <p className="chapter-paragraph">
-                  Little scraps tucked into coat pockets, sticky notes left on the coffee machine, and folded letters meant to make rainy days softer. A jar of reminders that you are cherished.
+                  Not every sweet moment needs a big gesture. Sometimes it’s just a folded napkin, a favorite book quote, or a quick note left before leaving the house. This jar holds all those little written pieces of us.
                 </p>
                 
                 <button className="cta-button" onClick={() => navigateTo('sweets')}>
@@ -509,7 +509,7 @@ const App = () => {
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
             <div className="label-caps">Our favorite songs</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Soundtrack</h1>
-            <p className="header-subtitle">"Every moment we shared has its own groove, pressed in dusty wax."</p>
+            <p className="header-subtitle">"Press play to go back to how it felt."</p>
           </div>
 
           {/* Embedded Player Bar */}
@@ -689,7 +689,7 @@ const App = () => {
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
             <div className="label-caps">Bitter Moments</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Messy Board</h1>
-            <p className="header-subtitle">"Doodles on napkins, sticky memos, overlapping paper. Chaos preserved."</p>
+            <p className="header-subtitle">"Because saving our story means keeping the imperfect parts, too."</p>
           </div>
 
           {/* Interactive Input Pin Widget */}
