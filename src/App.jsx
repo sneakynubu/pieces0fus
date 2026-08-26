@@ -329,29 +329,25 @@ const App = () => {
   const [isFlipped, setIsFlipped] = useState(false)
   const [currentRandomNote, setCurrentRandomNote] = useState("Tap the jar to draw a little fold of warmth...")
   const [jarNotes, setJarNotes] = useState([])
-  const [sweetsMessages, setSweetsMessages] = useState([])
-  const [sweetsLoading, setSweetsLoading] = useState(true)
+  const [newSweetNote, setNewSweetNote] = useState("")
+  const [isDroppingNote, setIsDroppingNote] = useState(false)
+  const [dropSuccessMsg, setDropSuccessMsg] = useState("")
 
   useEffect(() => {
     if (!session) return
 
     const fetchSweets = async () => {
-      setSweetsLoading(true)
       try {
-        const [jarRes, msgRes] = await Promise.all([
-          supabase.from('sweets_jar_notes').select('*').order('created_at', { ascending: true }),
-          supabase.from('sweets_messages').select('*').order('created_at', { ascending: true })
-        ])
+        const { data, error } = await supabase
+          .from('sweets_jar_notes')
+          .select('*')
+          .order('created_at', { ascending: true })
 
-        if (jarRes.error) throw jarRes.error
-        if (msgRes.error) throw msgRes.error
+        if (error) throw error
 
-        setJarNotes((jarRes.data || []).map((row) => row.text))
-        setSweetsMessages((msgRes.data || []).map((row) => ({ author: row.author, msg: row.msg })))
+        setJarNotes((data || []).map((row) => row.text))
       } catch (err) {
         console.error("Failed to fetch sweets data:", err)
-      } finally {
-        setSweetsLoading(false)
       }
     }
 
@@ -370,42 +366,189 @@ const App = () => {
     }, 150)
   }
 
-  // 📓 4. Drafts Page Content
-  const [draftsNotebook, setDraftsNotebook] = useState({ leftPage: [], rightPage: [] })
-  const [draftsLoading, setDraftsLoading] = useState(true)
+  const handleSaveSweetNote = async (e) => {
+    e.preventDefault()
+    const trimmed = newSweetNote.trim()
+    if (!trimmed) return
 
-  useEffect(() => {
-    if (!session) return
+    setIsDroppingNote(true)
+    try {
+      const { data, error } = await supabase
+        .from('sweets_jar_notes')
+        .insert({ text: trimmed })
+        .select()
+        .single()
 
-    const fetchDrafts = async () => {
-      setDraftsLoading(true)
-      try {
-        const { data, error } = await supabase
-          .from('drafts_entries')
-          .select('*')
-          .order('created_at', { ascending: true })
+      if (error) throw error
 
-        if (error) throw error
-
-        const mapEntry = (row) => ({
-          date: row.date_label,
-          stamp: row.stamp,
-          text: row.text
-        })
-
-        const leftPage = (data || []).filter((row) => row.page === 'left').map(mapEntry)
-        const rightPage = (data || []).filter((row) => row.page === 'right').map(mapEntry)
-
-        setDraftsNotebook({ leftPage, rightPage })
-      } catch (err) {
-        console.error("Failed to fetch drafts entries:", err)
-      } finally {
-        setDraftsLoading(false)
-      }
+      // Immediately add to the jar pool so it can be drawn right away
+      setJarNotes((prev) => [...prev, data.text])
+      setNewSweetNote("")
+      setDropSuccessMsg("Dropped into the jar ✦")
+      setTimeout(() => setDropSuccessMsg(""), 2500)
+    } catch (err) {
+      console.error("Failed to save sweet note:", err)
+      setDropSuccessMsg("Something went wrong... try again.")
+      setTimeout(() => setDropSuccessMsg(""), 2500)
+    } finally {
+      setIsDroppingNote(false)
     }
+  }
 
-    fetchDrafts()
-  }, [session])
+  // 📓 4. Drafts Page — Drawing Canvas State
+  const sketchCanvasRef = useRef(null)
+  const isDrawingRef = useRef(false)
+  const lastPosRef = useRef({ x: 0, y: 0 })
+  const [drawingTool, setDrawingTool] = useState('pen') // 'pen' | 'eraser'
+  const [brushColor, setBrushColor] = useState('#2E2A27')
+  const [brushSize, setBrushSize] = useState(3)
+  const [canvasHistory, setCanvasHistory] = useState([]) // array of imageData URLs for undo
+  const [savedSketches, setSavedSketches] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('drafts_sketches') || '[]')
+    } catch {
+      return []
+    }
+  })
+
+  const PALETTE_COLORS = [
+    { label: 'Charcoal Ink', value: '#2E2A27' },
+    { label: 'Almond Rose', value: '#B59C8D' },
+    { label: 'Terracotta', value: '#A0522D' },
+    { label: 'Indigo', value: '#4A5568' },
+    { label: 'Olive', value: '#6B7B3A' },
+    { label: 'Sunset Blush', value: '#C4857A' },
+    { label: 'Cream White', value: '#F5EBE0' },
+  ]
+
+  const BRUSH_SIZES = [
+    { label: 'Fine', value: 1.5 },
+    { label: 'Medium', value: 3 },
+    { label: 'Bold', value: 6 },
+    { label: 'Marker', value: 14 },
+  ]
+
+  const getCanvasPos = (canvas, e) => {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    }
+  }
+
+  const snapshotCanvas = () => {
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    const dataUrl = canvas.toDataURL()
+    setCanvasHistory(prev => [...prev.slice(-19), dataUrl]) // Keep last 20 states
+  }
+
+  const startDrawing = (e) => {
+    e.preventDefault()
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    snapshotCanvas()
+    isDrawingRef.current = true
+    lastPosRef.current = getCanvasPos(canvas, e)
+  }
+
+  const draw = (e) => {
+    e.preventDefault()
+    if (!isDrawingRef.current) return
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    const pos = getCanvasPos(canvas, e)
+
+    ctx.beginPath()
+    ctx.moveTo(lastPosRef.current.x, lastPosRef.current.y)
+    ctx.lineTo(pos.x, pos.y)
+    ctx.strokeStyle = drawingTool === 'eraser' ? '#FFFFFF' : brushColor
+    ctx.lineWidth = drawingTool === 'eraser' ? brushSize * 5 : brushSize
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.globalCompositeOperation = drawingTool === 'eraser' ? 'destination-out' : 'source-over'
+    ctx.stroke()
+
+    lastPosRef.current = pos
+  }
+
+  const stopDrawing = (e) => {
+    if (e) e.preventDefault()
+    isDrawingRef.current = false
+  }
+
+  const handleUndo = () => {
+    const canvas = sketchCanvasRef.current
+    if (!canvas || canvasHistory.length === 0) return
+    const ctx = canvas.getContext('2d')
+    const prev = canvasHistory[canvasHistory.length - 1]
+    setCanvasHistory(h => h.slice(0, -1))
+    const img = new Image()
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.globalCompositeOperation = 'source-over'
+      ctx.drawImage(img, 0, 0)
+    }
+    img.src = prev
+  }
+
+  const handleClearCanvas = () => {
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    snapshotCanvas()
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
+
+  const handleSaveSketch = () => {
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    // Flatten onto white background for saving
+    const offscreen = document.createElement('canvas')
+    offscreen.width = canvas.width
+    offscreen.height = canvas.height
+    const oc = offscreen.getContext('2d')
+    oc.fillStyle = '#FAF7F2'
+    oc.fillRect(0, 0, offscreen.width, offscreen.height)
+    oc.drawImage(canvas, 0, 0)
+    const dataUrl = offscreen.toDataURL('image/jpeg', 0.8)
+    const sketch = {
+      id: Date.now(),
+      dataUrl,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' })
+    }
+    const updated = [sketch, ...savedSketches]
+    setSavedSketches(updated)
+    localStorage.setItem('drafts_sketches', JSON.stringify(updated))
+    // Clear the canvas after saving
+    const ctx = canvas.getContext('2d')
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    setCanvasHistory([])
+  }
+
+  const handleDeleteSketch = (id) => {
+    const updated = savedSketches.filter(s => s.id !== id)
+    setSavedSketches(updated)
+    localStorage.setItem('drafts_sketches', JSON.stringify(updated))
+  }
+
+  // Initialize canvas on mount / when drafts page is shown
+  useEffect(() => {
+    if (currentPage !== 'drafts') return
+    const canvas = sketchCanvasRef.current
+    if (!canvas) return
+    const dpr = window.devicePixelRatio || 1
+    const rect = canvas.getBoundingClientRect()
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    const ctx = canvas.getContext('2d')
+    ctx.scale(dpr, dpr)
+  }, [currentPage])
 
   // Navigation Helper
   const navigateTo = (pageName) => {
@@ -1227,41 +1370,43 @@ const App = () => {
 
           <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
 
-          {/* Grid of Note Cards */}
-          {sweetsLoading ? (
-            <div className="sweets-empty-state">
-              <div className="empty-state-card">
-                <p className="script-text empty-state-text">Loading the notes...</p>
-              </div>
-            </div>
-          ) : sweetsMessages.length === 0 ? (
-            <div className="sweets-empty-state">
-              <div className="empty-state-card">
-                <p className="script-text empty-state-text">
-                  "No sweet notes yet."
-                </p>
-                <span className="empty-state-subtext">
-                  Folded reminders, mirror notes, and margin memories will appear here.
+          {/* Sweet Note Drop Form */}
+          <div className="sweet-note-container">
+            <div className="label-caps" style={{ marginBottom: '0.5rem', textAlign: 'center' }}>Write a sweet note</div>
+            <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', textAlign: 'center', marginBottom: '1.5rem', fontStyle: 'italic' }}>
+              Tuck a little warmth into the jar — it will be drawn randomly later.
+            </p>
+            <form className="sweet-note-form" onSubmit={handleSaveSweetNote}>
+              <textarea
+                className="sweet-note-textarea"
+                placeholder="Write something sweet here... a reminder, a little love note, a memory..."
+                value={newSweetNote}
+                onChange={(e) => setNewSweetNote(e.target.value)}
+                maxLength={300}
+                required
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <span className="sweet-jar-counter">
+                  {jarNotes.length > 0
+                    ? `${jarNotes.length} note${jarNotes.length === 1 ? '' : 's'} in the jar`
+                    : 'The jar is empty — be the first to drop one in'}
                 </span>
+                <button
+                  type="submit"
+                  className="cta-button"
+                  disabled={isDroppingNote || !newSweetNote.trim()}
+                  style={{ backgroundColor: 'var(--almond-silk)' }}
+                >
+                  {isDroppingNote ? 'Dropping...' : 'Save & drop to jar'}
+                </button>
               </div>
-            </div>
-          ) : (
-            <div className="sweets-grid">
-              {sweetsMessages.map((item, index) => (
-                <div key={index} className="folded-letter-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                    <span className="label-caps" style={{ fontSize: '0.65rem' }}>MEMO CARD</span>
-                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--highlight)', fontStyle: 'italic' }}>
-                      {item.author}
-                    </span>
-                  </div>
-                  <p className="script-text" style={{ fontSize: '1.55rem', lineHeight: '1.3', color: 'var(--dark-text)' }}>
-                    "{item.msg}"
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+            </form>
+            {dropSuccessMsg && (
+              <div className="drop-toast">
+                <span className="script-text" style={{ fontSize: '1.35rem' }}>{dropSuccessMsg}</span>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -1277,83 +1422,149 @@ const App = () => {
           <div className="main-header" style={{ padding: '2rem 0 3rem 0', borderBottom: '1px dashed var(--bone)' }}>
             <div className="label-caps">Random Thoughts</div>
             <h1 className="header-title" style={{ fontSize: '3.5rem' }}>The Open Notebook</h1>
-            <p className="header-subtitle">"Desaturated tones, scratched sentences, cut-off lines. Raw thoughts left unsent."</p>
+            <p className="header-subtitle">"Draw your thoughts on the page. Scratch them out. Let them breathe."</p>
           </div>
 
-          {/* Open Notebook Layout Spread */}
-          <div className="notebook-spread">
-            <div className="notebook-spine"></div>
-            <div className="notebook-page-layout">
-              
-              {/* Left Column (Page 1) */}
-              <div className="notebook-column">
-                {draftsLoading ? (
-                  <div className="notebook-empty-page">
-                    <p className="script-text notebook-empty-text">Loading the page...</p>
-                  </div>
-                ) : draftsNotebook.leftPage.length === 0 ? (
-                  <div className="notebook-empty-page">
-                    <p className="script-text notebook-empty-text">
-                      "This page is still blank..."
-                    </p>
-                    <span className="notebook-empty-subtext">
-                      Unsent letters and midnight margins will be drafted here.
-                    </span>
-                  </div>
-                ) : (
-                  draftsNotebook.leftPage.map((entry, index) => (
-                    <div key={index} className="notebook-entry">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <span className="notebook-date">{entry.date}</span>
-                        <span className="unsent-stamp">{entry.stamp}</span>
-                      </div>
-                      {/* Render text with crossed out styling intact */}
-                      <p 
-                        className="notebook-text"
-                        dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
-                      />
-                    </div>
-                  ))
-                )}
+          {/* Drawing Canvas Area */}
+          <div className="sketch-canvas-container">
+
+            {/* Drawing Toolbar */}
+            <div className="drawing-toolbar">
+
+              {/* Tool: Pen / Eraser */}
+              <div className="toolbar-group">
+                <button
+                  className={`tool-button ${drawingTool === 'pen' ? 'active' : ''}`}
+                  onClick={() => setDrawingTool('pen')}
+                  title="Pen"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                  <span>Pen</span>
+                </button>
+                <button
+                  className={`tool-button ${drawingTool === 'eraser' ? 'active' : ''}`}
+                  onClick={() => setDrawingTool('eraser')}
+                  title="Eraser"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 20H7L3 16l11-11 6 6z"/><line x1="6" y1="14" x2="14" y2="6"/>
+                  </svg>
+                  <span>Eraser</span>
+                </button>
               </div>
 
-              {/* Right Column (Page 2) */}
-              <div className="notebook-column">
-                {draftsLoading ? (
-                  <div className="notebook-empty-page">
-                    <p className="script-text notebook-empty-text">Loading the page...</p>
-                  </div>
-                ) : draftsNotebook.rightPage.length === 0 ? (
-                  <div className="notebook-empty-page">
-                    <p className="script-text notebook-empty-text">
-                      "This page is still blank..."
-                    </p>
-                    <span className="notebook-empty-subtext">
-                      Scratched lines, train receipts, and unsaid thoughts will rest here.
-                    </span>
-                  </div>
-                ) : (
-                  draftsNotebook.rightPage.map((entry, index) => (
-                    <div key={index} className="notebook-entry">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <span className="notebook-date">{entry.date}</span>
-                        <span className="unsent-stamp" style={{ borderColor: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C', color: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C' }}>
-                          {entry.stamp}
-                        </span>
-                      </div>
-                      <p 
-                        className="notebook-text"
-                        dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
-                      />
-                    </div>
-                  ))
-                )}
+              {/* Color Palette */}
+              <div className="toolbar-group">
+                {PALETTE_COLORS.map((c) => (
+                  <button
+                    key={c.value}
+                    className={`palette-swatch ${brushColor === c.value && drawingTool === 'pen' ? 'selected' : ''}`}
+                    style={{ backgroundColor: c.value, border: c.value === '#F5EBE0' ? '1.5px solid var(--bone)' : 'none' }}
+                    onClick={() => { setBrushColor(c.value); setDrawingTool('pen') }}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+
+              {/* Brush Sizes */}
+              <div className="toolbar-group">
+                {BRUSH_SIZES.map((b) => (
+                  <button
+                    key={b.value}
+                    className={`brush-size-btn ${brushSize === b.value ? 'active' : ''}`}
+                    onClick={() => setBrushSize(b.value)}
+                    title={b.label}
+                  >
+                    <span style={{ width: `${Math.min(b.value * 2.5, 14)}px`, height: `${Math.min(b.value * 2.5, 14)}px`, borderRadius: '50%', backgroundColor: 'currentColor', display: 'block' }} />
+                  </button>
+                ))}
+              </div>
+
+              {/* Actions */}
+              <div className="toolbar-group" style={{ marginLeft: 'auto' }}>
+                <button
+                  className="tool-button"
+                  onClick={handleUndo}
+                  disabled={canvasHistory.length === 0}
+                  title="Undo"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/>
+                  </svg>
+                  <span>Undo</span>
+                </button>
+                <button
+                  className="tool-button"
+                  onClick={handleClearCanvas}
+                  title="Clear page"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                  </svg>
+                  <span>Clear</span>
+                </button>
+                <button
+                  className="tool-button save-btn"
+                  onClick={handleSaveSketch}
+                  title="Save to Notebook"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>Save to Notebook</span>
+                </button>
               </div>
 
             </div>
+
+            {/* The actual drawing canvas */}
+            <canvas
+              ref={sketchCanvasRef}
+              className="sketch-canvas"
+              style={{ cursor: drawingTool === 'eraser' ? 'cell' : 'crosshair' }}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
+              onTouchStart={startDrawing}
+              onTouchMove={draw}
+              onTouchEnd={stopDrawing}
+            />
+
           </div>
+
+          {/* Saved Sketches in Notebook Spread */}
+          {savedSketches.length > 0 && (
+            <>
+              <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
+              <div className="label-caps" style={{ textAlign: 'center', marginBottom: '2rem' }}>Saved sketches</div>
+              <div className="sketch-grid">
+                {savedSketches.map((sketch) => (
+                  <div key={sketch.id} className="sketch-item">
+                    <button
+                      className="note-delete-btn"
+                      onClick={() => handleDeleteSketch(sketch.id)}
+                      title="Remove sketch"
+                      aria-label="Remove sketch"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                    </button>
+                    <img src={sketch.dataUrl} alt="Saved sketch" className="sketch-img" />
+                    <div className="sketch-stamp">{sketch.date}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
         </div>
       )}
+
 
       {/* Consistent Footer */}
       <footer className="main-footer">
