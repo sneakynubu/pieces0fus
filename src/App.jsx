@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { supabase } from './supabaseClient'
 import soundtrackImg from './images/Soundtracks.jpg'
 import chaosImg from './images/Chaos.jpg'
 import sweetsImg from './images/Sweets.jpg'
@@ -86,6 +87,46 @@ const App = () => {
     document.body.classList.toggle('dark-mode', isDarkMode);
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
   }, [isDarkMode]);
+
+  // 🔐 Auth / Session State
+  const [session, setSession] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [loginEmail, setLoginEmail] = useState("")
+  const [loginPassword, setLoginPassword] = useState("")
+  const [loginError, setLoginError] = useState("")
+  const [loginSubmitting, setLoginSubmitting] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setAuthLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoginError("")
+    setLoginSubmitting(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: loginEmail,
+      password: loginPassword
+    })
+    if (error) {
+      setLoginError(error.message || "Couldn't log in. Please check your email and password.")
+    }
+    setLoginSubmitting(false)
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setCurrentPage('home')
+  }
 
   // 🎵 1. Songs Page State & Playlists
   const audioRef = useRef(null)
@@ -181,19 +222,62 @@ const App = () => {
 
   // 🌀 2. Chaos Page State & Board Items
   const [boardItems, setBoardItems] = useState([])
+  const [chaosLoading, setChaosLoading] = useState(true)
   const [deletingIds, setDeletingIds] = useState([])
   const [newNoteText, setNewNoteText] = useState("")
   const [newNoteColor, setNewNoteColor] = useState("yellow")
 
-  const handleDeleteNote = (id) => {
+  // Fetch chaos notes once logged in
+  useEffect(() => {
+    if (!session) return
+
+    const fetchChaosNotes = async () => {
+      setChaosLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('chaos_notes')
+          .select('*')
+          .order('created_at', { ascending: true })
+
+        if (error) throw error
+
+        const mapped = (data || []).map((row) => ({
+          id: row.id,
+          type: 'sticky',
+          shape: row.shape_variant || 'classic',
+          color: row.color || 'yellow',
+          rotation: row.rotation || '0deg',
+          width: row.width || '220px',
+          text: row.text,
+          date: new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' })
+        }))
+
+        setBoardItems(mapped)
+      } catch (err) {
+        console.error("Failed to fetch chaos notes:", err)
+      } finally {
+        setChaosLoading(false)
+      }
+    }
+
+    fetchChaosNotes()
+  }, [session])
+
+  const handleDeleteNote = async (id) => {
     setDeletingIds((prev) => [...prev, id])
-    setTimeout(() => {
+    setTimeout(async () => {
       setBoardItems((prev) => prev.filter((item) => item.id !== id))
       setDeletingIds((prev) => prev.filter((delId) => delId !== id))
+      try {
+        const { error } = await supabase.from('chaos_notes').delete().eq('id', id)
+        if (error) throw error
+      } catch (err) {
+        console.error("Failed to delete chaos note:", err)
+      }
     }, 250)
   }
 
-  const handleAddNote = (e) => {
+  const handleAddNote = async (e) => {
     e.preventDefault()
     if (!newNoteText.trim()) return
 
@@ -203,8 +287,9 @@ const App = () => {
     const randomAngle = (Math.random() * 13 - 6.5).toFixed(1)
     const randomRotation = `${randomAngle === '0.0' ? '2.5' : randomAngle}deg`
 
-    const newNote = {
-      id: Date.now(),
+    const optimisticId = `temp-${Date.now()}`
+    const optimisticNote = {
+      id: optimisticId,
       type: 'sticky',
       shape: randomShape,
       color: newNoteColor,
@@ -213,14 +298,65 @@ const App = () => {
       text: newNoteText,
       date: "Just Now"
     }
-    setBoardItems([newNote, ...boardItems])
+    setBoardItems([optimisticNote, ...boardItems])
     setNewNoteText("")
+
+    try {
+      const { data, error } = await supabase
+        .from('chaos_notes')
+        .insert({
+          text: optimisticNote.text,
+          color: optimisticNote.color,
+          rotation: optimisticNote.rotation,
+          width: optimisticNote.width,
+          shape_variant: optimisticNote.shape
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Swap the optimistic temp id for the real Supabase id
+      setBoardItems((prev) =>
+        prev.map((item) => (item.id === optimisticId ? { ...item, id: data.id, date: "Just Now" } : item))
+      )
+    } catch (err) {
+      console.error("Failed to save chaos note:", err)
+    }
   }
 
   // 🍭 3. Sweets Page State & Jar Quotes
   const [isFlipped, setIsFlipped] = useState(false)
   const [currentRandomNote, setCurrentRandomNote] = useState("Tap the jar to draw a little fold of warmth...")
-  const jarNotes = []
+  const [jarNotes, setJarNotes] = useState([])
+  const [sweetsMessages, setSweetsMessages] = useState([])
+  const [sweetsLoading, setSweetsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!session) return
+
+    const fetchSweets = async () => {
+      setSweetsLoading(true)
+      try {
+        const [jarRes, msgRes] = await Promise.all([
+          supabase.from('sweets_jar_notes').select('*').order('created_at', { ascending: true }),
+          supabase.from('sweets_messages').select('*').order('created_at', { ascending: true })
+        ])
+
+        if (jarRes.error) throw jarRes.error
+        if (msgRes.error) throw msgRes.error
+
+        setJarNotes((jarRes.data || []).map((row) => row.text))
+        setSweetsMessages((msgRes.data || []).map((row) => ({ author: row.author, msg: row.msg })))
+      } catch (err) {
+        console.error("Failed to fetch sweets data:", err)
+      } finally {
+        setSweetsLoading(false)
+      }
+    }
+
+    fetchSweets()
+  }, [session])
 
   const handleDrawNote = () => {
     setIsFlipped(true)
@@ -234,18 +370,112 @@ const App = () => {
     }, 150)
   }
 
-  const sweetsMessages = []
-
   // 📓 4. Drafts Page Content
-  const draftsNotebook = {
-    leftPage: [],
-    rightPage: []
-  }
+  const [draftsNotebook, setDraftsNotebook] = useState({ leftPage: [], rightPage: [] })
+  const [draftsLoading, setDraftsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!session) return
+
+    const fetchDrafts = async () => {
+      setDraftsLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('drafts_entries')
+          .select('*')
+          .order('created_at', { ascending: true })
+
+        if (error) throw error
+
+        const mapEntry = (row) => ({
+          date: row.date_label,
+          stamp: row.stamp,
+          text: row.text
+        })
+
+        const leftPage = (data || []).filter((row) => row.page === 'left').map(mapEntry)
+        const rightPage = (data || []).filter((row) => row.page === 'right').map(mapEntry)
+
+        setDraftsNotebook({ leftPage, rightPage })
+      } catch (err) {
+        console.error("Failed to fetch drafts entries:", err)
+      } finally {
+        setDraftsLoading(false)
+      }
+    }
+
+    fetchDrafts()
+  }, [session])
 
   // Navigation Helper
   const navigateTo = (pageName) => {
     setCurrentPage(pageName)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // 🔐 Auth loading state — avoid flashing login screen before session check resolves
+  if (authLoading) {
+    return (
+      <div className="scrapbook-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <p className="script-text" style={{ fontSize: '1.8rem', color: 'var(--highlight)' }}>Opening the archive...</p>
+      </div>
+    )
+  }
+
+  // 🔐 Login Gate
+  if (!session) {
+    return (
+      <div className="scrapbook-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem' }}>
+        <div style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+          <div className="label-caps" style={{ marginBottom: '1rem' }}>Private Archive</div>
+          <h1 className="header-title" style={{ fontSize: '2.75rem', marginBottom: '0.5rem' }}>Pieces of Us</h1>
+          <p className="header-subtitle" style={{ marginBottom: '2.5rem' }}>
+            A quiet, shared space. Log in to step inside.
+          </p>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', textAlign: 'left' }}>
+            <div>
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted-text)', display: 'block', marginBottom: '0.4rem' }}>
+                Email
+              </label>
+              <input
+                type="email"
+                required
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                className="pin-textarea"
+                style={{ minHeight: 'unset', padding: '0.75rem 1rem' }}
+                placeholder="you@example.com"
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted-text)', display: 'block', marginBottom: '0.4rem' }}>
+                Password
+              </label>
+              <input
+                type="password"
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                className="pin-textarea"
+                style={{ minHeight: 'unset', padding: '0.75rem 1rem' }}
+                placeholder="••••••••"
+              />
+            </div>
+
+            {loginError && (
+              <p style={{ color: '#BC8C8C', fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>
+                {loginError}
+              </p>
+            )}
+
+            <button type="submit" className="cta-button" disabled={loginSubmitting} style={{ marginTop: '0.5rem' }}>
+              {loginSubmitting ? "Opening..." : "Enter"}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -291,6 +521,19 @@ const App = () => {
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
               </svg>
             )}
+          </button>
+
+          <button
+            className="navbar-icon-btn"
+            onClick={handleLogout}
+            title="Log out"
+            aria-label="Log out"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
           </button>
         </div>
       </nav>
@@ -753,7 +996,13 @@ const App = () => {
           <div className="chaos-board">
             <div className="cork-texture"></div>
 
-            {boardItems.length === 0 ? (
+            {chaosLoading ? (
+              <div className="board-empty-state">
+                <div className="empty-state-card">
+                  <p className="script-text empty-state-text">Loading the board...</p>
+                </div>
+              </div>
+            ) : boardItems.length === 0 ? (
               <div className="board-empty-state">
                 <div className="empty-state-card">
                   <div className="pushpin"></div>
@@ -979,7 +1228,13 @@ const App = () => {
           <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
 
           {/* Grid of Note Cards */}
-          {sweetsMessages.length === 0 ? (
+          {sweetsLoading ? (
+            <div className="sweets-empty-state">
+              <div className="empty-state-card">
+                <p className="script-text empty-state-text">Loading the notes...</p>
+              </div>
+            </div>
+          ) : sweetsMessages.length === 0 ? (
             <div className="sweets-empty-state">
               <div className="empty-state-card">
                 <p className="script-text empty-state-text">
@@ -1032,7 +1287,11 @@ const App = () => {
               
               {/* Left Column (Page 1) */}
               <div className="notebook-column">
-                {draftsNotebook.leftPage.length === 0 ? (
+                {draftsLoading ? (
+                  <div className="notebook-empty-page">
+                    <p className="script-text notebook-empty-text">Loading the page...</p>
+                  </div>
+                ) : draftsNotebook.leftPage.length === 0 ? (
                   <div className="notebook-empty-page">
                     <p className="script-text notebook-empty-text">
                       "This page is still blank..."
@@ -1060,7 +1319,11 @@ const App = () => {
 
               {/* Right Column (Page 2) */}
               <div className="notebook-column">
-                {draftsNotebook.rightPage.length === 0 ? (
+                {draftsLoading ? (
+                  <div className="notebook-empty-page">
+                    <p className="script-text notebook-empty-text">Loading the page...</p>
+                  </div>
+                ) : draftsNotebook.rightPage.length === 0 ? (
                   <div className="notebook-empty-page">
                     <p className="script-text notebook-empty-text">
                       "This page is still blank..."
