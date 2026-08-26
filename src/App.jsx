@@ -1,8 +1,78 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import soundtrackImg from './images/Soundtracks.jpg'
 import chaosImg from './images/Chaos.jpg'
 import sweetsImg from './images/Sweets.jpg'
 import draftsImg from './images/Drafts.jpg'
+import track1 from './audio/flatline.mp3'
+import track2 from './audio/htimylm.mp3'
+import track3 from './audio/perfect.mp3'
+import track4 from './audio/sweet.mp3'
+import track5 from './audio/tothebone.mp3'
+import track6 from './audio/untilyou.mp3'
+
+const songPlaylist = [
+  { 
+    title: "Flatline", 
+    artist: "Justin Bieber", 
+    audioSrc: track1,
+    mood: "Nostalgic",
+    note: "the song that played when we got caught in that sudden July storm. We shared a single jacket and hid under the old theater awning, completely soaked and laughing.",
+    artColor: "#EAD5C5",
+    artType: "tape"
+  },
+  { 
+    title: "hate that i made you love me", 
+    artist: "Ariana Grande", 
+    audioSrc: track2,
+    mood: "Cozy",
+    note: "the track that was on repeat at table four, under the hanging fern, while the rain painted silver streaks on the glass. The coffee was lukewarm, but the room felt infinite.",
+    artColor: "#D5BDAF",
+    artType: "coffee"
+  },
+  { 
+    title: "Perfect", 
+    artist: "Ed Sheeran", 
+    audioSrc: track3,
+    mood: "Slow",
+    note: "the track we played at 4 AM, driving through the empty coastal tunnel just to hear the bass rattle the dusty dashboard. Headlights pointing into the sweet unknown.",
+    artColor: "#FFC2A8",
+    artType: "road"
+  },
+  { 
+    title: "Sweet", 
+    artist: "Cigarettes After Sex", 
+    audioSrc: track4,
+    mood: "Intimate",
+    note: "the soft acoustic guitar song we hummed on the kitchen floor at 2 AM, waiting for the toaster to pop and the Earl Grey to finish steeping.",
+    artColor: "#B5C6C9",
+    artType: "moon"
+  },
+  { 
+    title: "To The Bone", 
+    artist: "Pamungkas", 
+    audioSrc: track5,
+    mood: "Mellow",
+    note: "the song we listened to through shared headphones on the freezing boardwalk, watching the fog swallow the lighthouse sweep and sand burying our boots.",
+    artColor: "#E2CFEA",
+    artType: "wave"
+  },
+  { 
+    title: "Until You", 
+    artist: "Shayne Ward", 
+    audioSrc: track6,
+    mood: "Sweet",
+    note: "what played in the background when we burned the first batch of french toast and danced to cover up the smoke alarm.",
+    artColor: "#F3D5CA",
+    artType: "baking"
+  }
+]
+
+const formatTime = (timeInSeconds) => {
+  if (isNaN(timeInSeconds) || timeInSeconds === Infinity || timeInSeconds === null || timeInSeconds === undefined) return "00:00"
+  const mins = Math.floor(timeInSeconds / 60)
+  const secs = Math.floor(timeInSeconds % 60)
+  return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`
+}
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home')
@@ -18,93 +88,96 @@ const App = () => {
   }, [isDarkMode]);
 
   // 🎵 1. Songs Page State & Playlists
+  const audioRef = useRef(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentSongIndex, setCurrentSongIndex] = useState(0)
-  const [songProgress, setSongProgress] = useState(40) // percentage
-  const [trackTime, setTrackTime] = useState("01:24")
+  const [songProgress, setSongProgress] = useState(0) // percentage
+  const [trackTime, setTrackTime] = useState("00:00")
+  const [audioDuration, setAudioDuration] = useState("00:00")
+  const [songDurations, setSongDurations] = useState({})
+  const [audioError, setAudioError] = useState(false)
 
-  const songPlaylist = [
-    { 
-      title: "Warm Breeze & Old Tape", 
-      artist: "The Paper Cranes", 
-      duration: "3:42", 
-      mood: "Nostalgic",
-      note: "the song that played when we got caught in that sudden July storm. We shared a single jacket and hid under the old theater awning, completely soaked and laughing.",
-      artColor: "#EAD5C5",
-      artType: "tape"
-    },
-    { 
-      title: "Coffee & Afternoon Rain", 
-      artist: "Misty Corner", 
-      duration: "4:15", 
-      mood: "Cozy",
-      note: "the track that was on repeat at table four, under the hanging fern, while the rain painted silver streaks on the glass. The coffee was lukewarm, but the room felt infinite.",
-      artColor: "#D5BDAF",
-      artType: "coffee"
-    },
-    { 
-      title: "Dashboard Dust", 
-      artist: "Highways & Horizons", 
-      duration: "2:58", 
-      mood: "Slow",
-      note: "the track we played at 4 AM, driving through the empty coastal tunnel just to hear the bass rattle the dusty dashboard. Headlights pointing into the sweet unknown.",
-      artColor: "#FFC2A8",
-      artType: "road"
-    },
-    { 
-      title: "Midnight Whispers", 
-      artist: "Socks on Linoleum", 
-      duration: "3:10", 
-      mood: "Intimate",
-      note: "the soft acoustic guitar song we hummed on the kitchen floor at 2 AM, waiting for the toaster to pop and the Earl Grey to finish steeping.",
-      artColor: "#B5C6C9",
-      artType: "moon"
-    },
-    { 
-      title: "October Shore", 
-      artist: "The Sea Glass", 
-      duration: "5:04", 
-      mood: "Mellow",
-      note: "the song we listened to through shared headphones on the freezing boardwalk, watching the fog swallow the lighthouse sweep and sand burying our boots.",
-      artColor: "#E2CFEA",
-      artType: "wave"
-    },
-    { 
-      title: "Cinnamon & Warm Crumb", 
-      artist: "Flour Dust Duo", 
-      duration: "3:18", 
-      mood: "Sweet",
-      note: "what played in the background when we burned the first batch of french toast and danced to cover up the smoke alarm.",
-      artColor: "#F3D5CA",
-      artType: "baking"
-    }
-  ]
-
-  // Track timer simulation
+  // Preload durations for song cards
   useEffect(() => {
-    let interval = null
+    songPlaylist.forEach((song, idx) => {
+      const audio = new Audio(song.audioSrc)
+      audio.onloadedmetadata = () => {
+        if (audio.duration && !isNaN(audio.duration)) {
+          setSongDurations((prev) => ({
+            ...prev,
+            [idx]: formatTime(audio.duration)
+          }))
+        }
+      }
+    })
+  }, [])
+
+  // Handle play / pause and track switching
+  useEffect(() => {
+    if (!audioRef.current) return
+    setAudioError(false)
     if (isPlaying) {
-      interval = setInterval(() => {
-        setSongProgress((prev) => {
-          if (prev >= 100) {
-            // Loop to next song
-            setCurrentSongIndex((curr) => (curr + 1) % songPlaylist.length)
-            return 0
-          }
-          const nextProg = prev + 1
-          // update time label
-          const totalSeconds = Math.floor((nextProg / 100) * 200)
-          const mins = Math.floor(totalSeconds / 60)
-          const secs = totalSeconds % 60
-          setTrackTime(`0${mins}:${secs < 10 ? '0' : ''}${secs}`)
-          return nextProg
+      const playPromise = audioRef.current.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("Audio playback interrupted or failed:", err)
         })
-      }, 1000)
+      }
     } else {
-      clearInterval(interval)
+      audioRef.current.pause()
     }
-    return () => clearInterval(interval)
-  }, [isPlaying, currentSongIndex, songPlaylist.length])
+  }, [isPlaying, currentSongIndex])
+
+  // Audio Event Handlers
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return
+    const current = audioRef.current.currentTime
+    const dur = audioRef.current.duration
+    if (dur && !isNaN(dur) && dur > 0) {
+      setSongProgress((current / dur) * 100)
+    }
+    setTrackTime(formatTime(current))
+  }
+
+  const handleLoadedMetadata = () => {
+    if (!audioRef.current) return
+    const dur = audioRef.current.duration
+    if (dur && !isNaN(dur)) {
+      const formatted = formatTime(dur)
+      setAudioDuration(formatted)
+      setSongDurations((prev) => ({
+        ...prev,
+        [currentSongIndex]: formatted
+      }))
+    }
+  }
+
+  const handleSongEnded = () => {
+    setCurrentSongIndex((prev) => (prev + 1) % songPlaylist.length)
+    setIsPlaying(true)
+  }
+
+  const handleAudioError = () => {
+    setAudioError(true)
+    setIsPlaying(false)
+  }
+
+  const handleProgressClick = (e) => {
+    if (!audioRef.current) return
+    const bar = e.currentTarget
+    const rect = bar.getBoundingClientRect()
+    const clickX = e.clientX - rect.left
+    const width = rect.width
+    if (width <= 0) return
+    const percentage = Math.max(0, Math.min(1, clickX / width))
+    const dur = audioRef.current.duration
+    if (dur && !isNaN(dur) && isFinite(dur)) {
+      const newTime = percentage * dur
+      audioRef.current.currentTime = newTime
+      setSongProgress(percentage * 100)
+      setTrackTime(formatTime(newTime))
+    }
+  }
 
   // 🌀 2. Chaos Page State & Board Items
   const [boardItems, setBoardItems] = useState([
@@ -500,6 +573,17 @@ const App = () => {
       {/* 🎵 1. INDIVIDUAL SONGS PAGE */}
       {currentPage === 'songs' && (
         <div className="songs-page-container">
+          <audio
+            ref={audioRef}
+            src={songPlaylist[currentSongIndex].audioSrc}
+            preload="metadata"
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={handleSongEnded}
+            onError={handleAudioError}
+            style={{ display: 'none' }}
+          />
+
           <div className="breadcrumb-container">
             <span className="breadcrumb-back" onClick={() => navigateTo('home')}>
               ← Back to Pieces of Us
@@ -526,6 +610,11 @@ const App = () => {
               <div>
                 <h4 style={{ fontSize: '1.1rem', color: 'var(--dark-text)' }}>{songPlaylist[currentSongIndex].title}</h4>
                 <p style={{ fontSize: '0.8rem', color: 'var(--muted-text)' }}>{songPlaylist[currentSongIndex].artist} • <span className="label-caps" style={{ fontSize: '0.65rem' }}>{songPlaylist[currentSongIndex].mood}</span></p>
+                {audioError && (
+                  <span style={{ fontSize: '0.75rem', color: '#BC8C8C', fontStyle: 'italic', display: 'block', marginTop: '2px' }}>
+                    Audio unavailable
+                  </span>
+                )}
               </div>
             </div>
 
@@ -533,16 +622,11 @@ const App = () => {
               <span>{trackTime}</span>
               <div 
                 className="player-progress-bar"
-                onClick={(e) => {
-                  const bar = e.currentTarget
-                  const rect = bar.getBoundingClientRect()
-                  const percent = Math.floor(((e.clientX - rect.left) / rect.width) * 100)
-                  setSongProgress(percent)
-                }}
+                onClick={handleProgressClick}
               >
                 <div className="player-progress-fill" style={{ width: `${songProgress}%` }}></div>
               </div>
-              <span>{songPlaylist[currentSongIndex].duration}</span>
+              <span>{audioError ? "--:--" : (songDurations[currentSongIndex] || audioDuration || "--:--")}</span>
             </div>
 
             <div className="player-controls">
@@ -654,7 +738,9 @@ const App = () => {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span className="label-caps" style={{ fontSize: '0.65rem' }}>{song.mood}</span>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-text)', fontWeight: 'bold' }}>{song.duration}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--muted-text)', fontWeight: 'bold' }}>
+                      {songDurations[idx] || "--:--"}
+                    </span>
                   </div>
                   <h3 style={{ fontSize: '1.4rem', color: 'var(--dark-text)', marginTop: '0.25rem' }}>{song.title}</h3>
                   <p style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontStyle: 'italic' }}>by {song.artist}</p>
