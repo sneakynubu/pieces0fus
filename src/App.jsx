@@ -180,71 +180,36 @@ const App = () => {
   }
 
   // 🌀 2. Chaos Page State & Board Items
-  const [boardItems, setBoardItems] = useState([
-    {
-      id: 1,
-      type: 'sticky',
-      color: 'yellow',
-      rotation: '-3deg',
-      width: '230px',
-      text: "Must remember: the secret to her Earl Grey tea is exactly one lavender sprig, stirred clockwise twice. Never rush the steep.",
-      date: "Nov 12, '24"
-    },
-    {
-      id: 2,
-      type: 'photo',
-      rotation: '4deg',
-      width: '250px',
-      caption: "Misty Harbor lighthouse sweep",
-      imageColor: "#748E9E",
-      svgStyle: "lighthouse"
-    },
-    {
-      id: 3,
-      type: 'sticky',
-      color: 'pink',
-      rotation: '1.5deg',
-      width: '210px',
-      text: "Bucket list item #14: Buy train tickets with absolutely no destination in mind, get off at the first station that smells like evergreen pines.",
-      date: "Dec 03, '24"
-    },
-    {
-      id: 4,
-      type: 'doodle',
-      rotation: '-6deg',
-      width: '160px',
-      svgStyle: "coffee-doodle"
-    },
-    {
-      id: 5,
-      type: 'scrap',
-      rotation: '-2deg',
-      width: '240px',
-      text: "Table four napkins: 'If we could freeze a single hour of the year, it would be a wet Tuesday under the ferns.'",
-      date: "Jan 18, '25"
-    },
-    {
-      id: 6,
-      type: 'sticky',
-      color: 'blue',
-      rotation: '3.5deg',
-      width: '220px',
-      text: "The lighthouse keeper waved back at us. Or maybe he was just telling us to get off the wet rocks. Let's believe he waved.",
-      date: "Feb 09, '25"
-    }
-  ])
+  const [boardItems, setBoardItems] = useState([])
+  const [deletingIds, setDeletingIds] = useState([])
   const [newNoteText, setNewNoteText] = useState("")
   const [newNoteColor, setNewNoteColor] = useState("yellow")
+
+  const handleDeleteNote = (id) => {
+    setDeletingIds((prev) => [...prev, id])
+    setTimeout(() => {
+      setBoardItems((prev) => prev.filter((item) => item.id !== id))
+      setDeletingIds((prev) => prev.filter((delId) => delId !== id))
+    }, 250)
+  }
 
   const handleAddNote = (e) => {
     e.preventDefault()
     if (!newNoteText.trim()) return
+
+    const shapeVariants = ['classic', 'torn', 'taped']
+    const randomShape = shapeVariants[Math.floor(Math.random() * shapeVariants.length)]
+    const randomWidth = `${Math.floor(Math.random() * (260 - 190 + 1)) + 190}px`
+    const randomAngle = (Math.random() * 13 - 6.5).toFixed(1)
+    const randomRotation = `${randomAngle === '0.0' ? '2.5' : randomAngle}deg`
+
     const newNote = {
       id: Date.now(),
       type: 'sticky',
+      shape: randomShape,
       color: newNoteColor,
-      rotation: `${(Math.random() * 8 - 4).toFixed(1)}deg`,
-      width: '220px',
+      rotation: randomRotation,
+      width: randomWidth,
       text: newNoteText,
       date: "Just Now"
     }
@@ -255,60 +220,26 @@ const App = () => {
   // 🍭 3. Sweets Page State & Jar Quotes
   const [isFlipped, setIsFlipped] = useState(false)
   const [currentRandomNote, setCurrentRandomNote] = useState("Tap the jar to draw a little fold of warmth...")
-  const jarNotes = [
-    "You make the quiet, unspectacular days feel like major adventures.",
-    "I'm so incredibly glad we exist in the same tiny corner of this infinite timeline.",
-    "Thank you for being the person who remembers how I take my tea, and which chord on the guitar buzzes.",
-    "My absolute favorite place in the world is sitting right next to you, doing absolutely nothing in wool socks.",
-    "I keep a small mental pocketful of your laughter to draw upon on rainy, stressful Tuesdays.",
-    "You look exceptionally beautiful when you are animatedly explaining something you love.",
-    "I cannot imagine any version of our lives where we didn't buy those impulsive coastal train tickets.",
-    "Every burnt brioche toast we made at 2 AM was twice as delicious as a Michelin feast."
-  ]
+  const jarNotes = []
 
   const handleDrawNote = () => {
     setIsFlipped(true)
     setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * jarNotes.length)
-      setCurrentRandomNote(jarNotes[randomIndex])
+      if (jarNotes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * jarNotes.length)
+        setCurrentRandomNote(jarNotes[randomIndex])
+      } else {
+        setCurrentRandomNote("The jar is empty for now...")
+      }
     }, 150)
   }
 
-  const sweetsMessages = [
-    { author: "Left on mirror", msg: "Have a beautiful morning. The coffee is prepped, just press start. Don't forget your gloves." },
-    { author: "Paper napkin", msg: "I noticed you were quiet during the drive. You don't have to carry the whole weight of the sky. I'm here." },
-    { author: "Book margin", msg: "I was reading page 84 and the description of the sunlight on the cedar floor reminded me exactly of your laugh." },
-    { author: "Text draft", msg: "I saw a dog that looked like a cloud and immediately wanted to send it to you. That's my day in a sentence." },
-    { author: "Envelope back", msg: "The salt air suits you. Let's stay on the coast for one more train rotation." },
-    { author: "Sticky scrap", msg: "We danced to cassette static in the kitchen. Best song I've ever heard." }
-  ]
+  const sweetsMessages = []
 
   // 📓 4. Drafts Page Content
   const draftsNotebook = {
-    leftPage: [
-      {
-        date: "July 14, 2024 — Unsent Letter",
-        stamp: "unsent",
-        text: "I sat on the train today and watched the scenery shift from dry evergreen pine valleys to the foggy shores. I wanted to write you about the tiny stray cat asleep on the station ticket bin, but I realized I was just searching for an excuse to hear from you. I wrote this instead. I suppose it will stay pressed between these pages..."
-      },
-      {
-        date: "Sept 02, 2024 — Midnight margins",
-        stamp: "unfinished",
-        text: "There are some things that can't be easily put into words. Like how the kitchen smelled of cold rain and burnt butter, and how the light caught the dust dancing in front of the cupboard. I wanted to say <span class='notebook-crossed-out'>I love you so much</span> but instead I just asked if you wanted another spoonful of honey. Sometimes the silence is safer..."
-      }
-    ],
-    rightPage: [
-      {
-        date: "Oct 11, 2024 — Coastal train ride",
-        stamp: "draft",
-        text: "The wind is rattling the old iron windows of the coach car. Sometimes I wonder if we are moving too fast, chasing a horizon that keeps slipping backwards. Or perhaps we are completely still, and it's the scenery that's rushing past us. I think we are just..."
-      },
-      {
-        date: "Nov 30, 2024 — Scratchpad",
-        stamp: "unfinished",
-        text: "Things left unsaid:<br/>1. I kept the train receipt because it had your doodle of a crescent moon on it.<br/>2. I still listen to the old tape we made even though my player chewing the tape edge.<br/>3. <span class='notebook-crossed-out'>I think we're going to make it.</span> I know we will."
-      }
-    ]
+    leftPage: [],
+    rightPage: []
   }
 
   // Navigation Helper
@@ -821,93 +752,128 @@ const App = () => {
           {/* Collage Board */}
           <div className="chaos-board">
             <div className="cork-texture"></div>
-            <div className="board-grid">
-              
-              {boardItems.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="board-item"
-                  style={{ 
-                    transform: `rotate(${item.rotation})`, 
-                    width: window.innerWidth >= 768 ? item.width : '100%',
-                    gridColumnEnd: item.type === 'photo' ? 'span 1' : 'auto'
-                  }}
-                >
-                  {/* Pushpin design overlay */}
+
+            {boardItems.length === 0 ? (
+              <div className="board-empty-state">
+                <div className="empty-state-card">
                   <div className="pushpin"></div>
-
-                  {/* 1. STICKY NOTE ITEM */}
-                  {item.type === 'sticky' && (
-                    <div className={`sticky-note-item ${item.color}`}>
-                      <p className="script-text sticky-note-text" style={{ fontSize: '1.5rem', lineHeight: '1.25' }}>
-                        "{item.text}"
-                      </p>
-                      <div className="sticky-note-footer">
-                        <span className="sticky-note-meta" style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>Scrap note</span>
-                        <span className="sticky-note-meta" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{item.date}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 2. PHOTO ITEM */}
-                  {item.type === 'photo' && (
-                    <div className="polaroid" style={{ transform: 'none', maxWidth: '100%' }}>
-                      <div className="polaroid-img-frame" style={{ aspectRatio: '1.1' }}>
-                        {item.svgStyle === 'lighthouse' && (
-                          <svg viewBox="0 0 200 180" fill="none" style={{ width: '100%', height: '100%' }}>
-                            <rect width="200" height="180" fill="#2E3740" />
-                            {/* Sea */}
-                            <rect x="0" y="110" width="200" height="70" fill="#1C242B" />
-                            {/* Moon and light sweep */}
-                            <circle cx="150" cy="50" r="14" fill="#E8DCD0" />
-                            <path d="M35 80 L160 62 L160 68 Z" fill="#FFE2C4" opacity="0.25" />
-                            {/* Lighthouse outline */}
-                            <rect x="30" y="70" width="12" height="40" fill="#E8DCD0" />
-                            <rect x="28" y="110" width="16" height="6" fill="#A94A4A" />
-                            <polygon points="30,70 36,55 42,70" fill="#1C242B" />
-                            {/* Light bulb */}
-                            <circle cx="36" cy="64" r="3" fill="#FFE2C4" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="polaroid-caption" style={{ fontSize: '1.35rem', bottom: '0.5rem' }}>
-                        {item.caption}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 3. DOODLE ITEM */}
-                  {item.type === 'doodle' && (
-                    <div className="doodle-item">
-                      {item.svgStyle === 'coffee-doodle' && (
-                        <svg viewBox="0 0 100 100" style={{ width: '80px', height: '80px', stroke: 'var(--highlight)', strokeWidth: '2.5', fill: 'none' }}>
-                          <path d="M20,60 C20,30 80,30 80,60 Q80,80 50,85 Q20,80 20,60" />
-                          <path d="M80,45 Q95,45 95,55 Q95,65 80,65" />
-                          <path d="M35,25 Q40,10 38,5" />
-                          <path d="M50,25 Q55,10 53,5" />
-                          <path d="M65,25 Q70,10 68,5" />
-                        </svg>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 4. TORN SCRAPBOOK SCRAP */}
-                  {item.type === 'scrap' && (
-                    <div className="taped-scrap" style={{ transform: 'none', padding: '1.25rem', maxWidth: '100%' }}>
-                      <div className="scotch-tape" style={{ width: '70px', height: '18px', top: '-10px' }}></div>
-                      <p className="script-text" style={{ fontSize: '1.45rem', color: 'var(--muted-text)', textAlign: 'center' }}>
-                        "{item.text}"
-                      </p>
-                      <div style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--highlight)', marginTop: '0.5rem', textTransform: 'uppercase' }}>
-                        {item.date}
-                      </div>
-                    </div>
-                  )}
-
+                  <p className="script-text empty-state-text">
+                    "The board is empty. Pin your first thought above."
+                  </p>
+                  <span className="empty-state-subtext">
+                    Scattered thoughts, memories, and scrap notes will appear here.
+                  </span>
                 </div>
-              ))}
+              </div>
+            ) : (
+              <div className="board-grid">
+                {boardItems.map((item) => {
+                  const isDeleting = deletingIds.includes(item.id)
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`board-item ${isDeleting ? 'deleting' : ''}`}
+                      style={{ 
+                        transform: `rotate(${item.rotation})`, 
+                        maxWidth: item.width || '240px',
+                        width: '100%',
+                        gridColumnEnd: item.type === 'photo' ? 'span 1' : 'auto'
+                      }}
+                    >
+                      {/* Delete button per note */}
+                      <button 
+                        className="note-delete-btn"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteNote(item.id)
+                        }}
+                        title="Remove scrap"
+                        aria-label="Remove scrap"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                      </button>
 
-            </div>
+                      {/* Pushpin design overlay (not used for taped shape) */}
+                      {item.shape !== 'taped' && <div className="pushpin"></div>}
+
+                      {/* 1. STICKY NOTE ITEM */}
+                      {item.type === 'sticky' && (
+                        <div className={`sticky-note-item ${item.color || 'yellow'} shape-${item.shape || 'classic'}`}>
+                          {item.shape === 'taped' && <div className="note-washi-tape"></div>}
+                          <p className="script-text sticky-note-text" style={{ fontSize: '1.5rem', lineHeight: '1.25' }}>
+                            "{item.text}"
+                          </p>
+                          <div className="sticky-note-footer">
+                            <span className="sticky-note-meta" style={{ fontSize: '0.65rem', textTransform: 'uppercase' }}>Scrap note</span>
+                            <span className="sticky-note-meta" style={{ fontSize: '0.65rem', fontWeight: 'bold' }}>{item.date}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 2. PHOTO ITEM */}
+                      {item.type === 'photo' && (
+                        <div className="polaroid" style={{ transform: 'none', maxWidth: '100%' }}>
+                          <div className="polaroid-img-frame" style={{ aspectRatio: '1.1' }}>
+                            {item.svgStyle === 'lighthouse' && (
+                              <svg viewBox="0 0 200 180" fill="none" style={{ width: '100%', height: '100%' }}>
+                                <rect width="200" height="180" fill="#2E3740" />
+                                {/* Sea */}
+                                <rect x="0" y="110" width="200" height="70" fill="#1C242B" />
+                                {/* Moon and light sweep */}
+                                <circle cx="150" cy="50" r="14" fill="#E8DCD0" />
+                                <path d="M35 80 L160 62 L160 68 Z" fill="#FFE2C4" opacity="0.25" />
+                                {/* Lighthouse outline */}
+                                <rect x="30" y="70" width="12" height="40" fill="#E8DCD0" />
+                                <rect x="28" y="110" width="16" height="6" fill="#A94A4A" />
+                                <polygon points="30,70 36,55 42,70" fill="#1C242B" />
+                                {/* Light bulb */}
+                                <circle cx="36" cy="64" r="3" fill="#FFE2C4" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="polaroid-caption" style={{ fontSize: '1.35rem', bottom: '0.5rem' }}>
+                            {item.caption}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 3. DOODLE ITEM */}
+                      {item.type === 'doodle' && (
+                        <div className="doodle-item">
+                          {item.svgStyle === 'coffee-doodle' && (
+                            <svg viewBox="0 0 100 100" style={{ width: '80px', height: '80px', stroke: 'var(--highlight)', strokeWidth: '2.5', fill: 'none' }}>
+                              <path d="M20,60 C20,30 80,30 80,60 Q80,80 50,85 Q20,80 20,60" />
+                              <path d="M80,45 Q95,45 95,55 Q95,65 80,65" />
+                              <path d="M35,25 Q40,10 38,5" />
+                              <path d="M50,25 Q55,10 53,5" />
+                              <path d="M65,25 Q70,10 68,5" />
+                            </svg>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 4. TORN SCRAPBOOK SCRAP */}
+                      {item.type === 'scrap' && (
+                        <div className="taped-scrap" style={{ transform: 'none', padding: '1.25rem', maxWidth: '100%' }}>
+                          <div className="scotch-tape" style={{ width: '70px', height: '18px', top: '-10px' }}></div>
+                          <p className="script-text" style={{ fontSize: '1.45rem', color: 'var(--muted-text)', textAlign: 'center' }}>
+                            "{item.text}"
+                          </p>
+                          <div style={{ textAlign: 'center', fontSize: '0.65rem', color: 'var(--highlight)', marginTop: '0.5rem', textTransform: 'uppercase' }}>
+                            {item.date}
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
+                  )
+                })}
+
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1013,21 +979,34 @@ const App = () => {
           <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
 
           {/* Grid of Note Cards */}
-          <div className="sweets-grid">
-            {sweetsMessages.map((item, index) => (
-              <div key={index} className="folded-letter-card">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                  <span className="label-caps" style={{ fontSize: '0.65rem' }}>MEMO CARD</span>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--highlight)', fontStyle: 'italic' }}>
-                    {item.author}
-                  </span>
-                </div>
-                <p className="script-text" style={{ fontSize: '1.55rem', lineHeight: '1.3', color: 'var(--dark-text)' }}>
-                  "{item.msg}"
+          {sweetsMessages.length === 0 ? (
+            <div className="sweets-empty-state">
+              <div className="empty-state-card">
+                <p className="script-text empty-state-text">
+                  "No sweet notes yet."
                 </p>
+                <span className="empty-state-subtext">
+                  Folded reminders, mirror notes, and margin memories will appear here.
+                </span>
               </div>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="sweets-grid">
+              {sweetsMessages.map((item, index) => (
+                <div key={index} className="folded-letter-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                    <span className="label-caps" style={{ fontSize: '0.65rem' }}>MEMO CARD</span>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 'bold', color: 'var(--highlight)', fontStyle: 'italic' }}>
+                      {item.author}
+                    </span>
+                  </div>
+                  <p className="script-text" style={{ fontSize: '1.55rem', lineHeight: '1.3', color: 'var(--dark-text)' }}>
+                    "{item.msg}"
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -1053,37 +1032,59 @@ const App = () => {
               
               {/* Left Column (Page 1) */}
               <div className="notebook-column">
-                {draftsNotebook.leftPage.map((entry, index) => (
-                  <div key={index} className="notebook-entry">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span className="notebook-date">{entry.date}</span>
-                      <span className="unsent-stamp">{entry.stamp}</span>
-                    </div>
-                    {/* Render text with crossed out styling intact */}
-                    <p 
-                      className="notebook-text"
-                      dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
-                    />
+                {draftsNotebook.leftPage.length === 0 ? (
+                  <div className="notebook-empty-page">
+                    <p className="script-text notebook-empty-text">
+                      "This page is still blank..."
+                    </p>
+                    <span className="notebook-empty-subtext">
+                      Unsent letters and midnight margins will be drafted here.
+                    </span>
                   </div>
-                ))}
+                ) : (
+                  draftsNotebook.leftPage.map((entry, index) => (
+                    <div key={index} className="notebook-entry">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span className="notebook-date">{entry.date}</span>
+                        <span className="unsent-stamp">{entry.stamp}</span>
+                      </div>
+                      {/* Render text with crossed out styling intact */}
+                      <p 
+                        className="notebook-text"
+                        dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
+                      />
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Right Column (Page 2) */}
               <div className="notebook-column">
-                {draftsNotebook.rightPage.map((entry, index) => (
-                  <div key={index} className="notebook-entry">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span className="notebook-date">{entry.date}</span>
-                      <span className="unsent-stamp" style={{ borderColor: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C', color: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C' }}>
-                        {entry.stamp}
-                      </span>
-                    </div>
-                    <p 
-                      className="notebook-text"
-                      dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
-                    />
+                {draftsNotebook.rightPage.length === 0 ? (
+                  <div className="notebook-empty-page">
+                    <p className="script-text notebook-empty-text">
+                      "This page is still blank..."
+                    </p>
+                    <span className="notebook-empty-subtext">
+                      Scratched lines, train receipts, and unsaid thoughts will rest here.
+                    </span>
                   </div>
-                ))}
+                ) : (
+                  draftsNotebook.rightPage.map((entry, index) => (
+                    <div key={index} className="notebook-entry">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <span className="notebook-date">{entry.date}</span>
+                        <span className="unsent-stamp" style={{ borderColor: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C', color: entry.stamp === 'draft' ? '#8CAC9C' : '#BC8C8C' }}>
+                          {entry.stamp}
+                        </span>
+                      </div>
+                      <p 
+                        className="notebook-text"
+                        dangerouslySetInnerHTML={{ __html: `"${entry.text}"` }}
+                      />
+                    </div>
+                  ))
+                )}
               </div>
 
             </div>

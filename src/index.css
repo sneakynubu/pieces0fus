@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Pieces of Us — Design System & Theme Engine
    ========================================================================== */
 
@@ -617,6 +617,9 @@ h1, h2, h3, h4 {
   width: 100%;
   max-width: 380px;
   border: 1px solid var(--card-border);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .scotch-tape {
@@ -816,20 +819,66 @@ h1, h2, h3, h4 {
 
 .board-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 2.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2.5rem 2rem;
+  align-items: start;
+  justify-items: center;
   position: relative;
   z-index: 5;
 }
 
 .board-item {
   position: relative;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .board-item:hover {
   transform: scale(1.05) rotate(0deg) !important;
   z-index: 20 !important;
+}
+
+.board-item.deleting {
+  opacity: 0;
+  transform: scale(0.75) translateY(-10px) !important;
+  pointer-events: none;
+}
+
+.note-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  color: var(--dark-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  z-index: 15;
+  padding: 0;
+}
+
+body.dark-mode .note-delete-btn {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--dark-text);
+}
+
+.board-item:hover .note-delete-btn,
+.note-delete-btn:focus-visible {
+  opacity: 1;
+}
+
+.note-delete-btn:hover {
+  background: rgba(188, 140, 140, 0.9);
+  color: #FFFFFF;
+  transform: scale(1.15);
 }
 
 .pushpin {
@@ -862,15 +911,62 @@ h1, h2, h3, h4 {
   border-radius: 2px;
   box-shadow: 3px 8px 12px rgba(0, 0, 0, 0.08);
   min-height: 160px;
+  height: auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   border: 1px solid rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Shape Variants */
+.sticky-note-item.shape-classic {
+  border-radius: 2px 2px 14px 2px;
+}
+
+.sticky-note-item.shape-torn {
+  border-radius: 3px 8px 2px 7px;
+  clip-path: polygon(0% 0%, 100% 0.5%, 99.2% 97.5%, 86% 99.2%, 72% 98%, 52% 99.6%, 36% 98.2%, 18% 99.4%, 0% 98%);
+}
+
+.sticky-note-item.shape-taped {
+  border-radius: 3px;
+  padding-top: 1.75rem;
+}
+
+.note-washi-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1deg);
+  width: 60px;
+  height: 20px;
+  background: rgba(235, 230, 215, 0.6);
+  backdrop-filter: blur(0.5px);
+  border-left: 2px dashed rgba(255, 255, 255, 0.4);
+  border-right: 2px dashed rgba(255, 255, 255, 0.4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  pointer-events: none;
+}
+
+body.dark-mode .note-washi-tape {
+  background: rgba(100, 90, 80, 0.6);
+  border-left: 2px dashed rgba(255, 255, 255, 0.2);
+  border-right: 2px dashed rgba(255, 255, 255, 0.2);
 }
 
 .sticky-note-text {
   color: var(--sticky-yellow-text);
   font-family: var(--font-script);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .sticky-note-meta {
@@ -903,6 +999,47 @@ h1, h2, h3, h4 {
 }
 .sticky-note-item.blue .sticky-note-meta {
   color: var(--sticky-blue-meta);
+}
+
+/* Empty Corkboard State */
+.board-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 480px;
+  position: relative;
+  z-index: 5;
+}
+
+.empty-state-card {
+  background-color: rgba(255, 255, 255, 0.35);
+  border: 2px dashed var(--board-border);
+  border-radius: 1rem;
+  padding: 3rem 2.5rem;
+  max-width: 440px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(2px);
+}
+
+body.dark-mode .empty-state-card {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-color: var(--board-border);
+}
+
+.empty-state-text {
+  font-size: 1.85rem;
+  color: var(--script-color);
+  line-height: 1.35;
+  margin-bottom: 0.75rem;
+}
+
+.empty-state-subtext {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  font-family: var(--font-sans);
+  display: block;
 }
 
 .doodle-item {
@@ -1082,6 +1219,13 @@ h1, h2, h3, h4 {
   border-width: 25px 25px 0 0;
 }
 
+.sweets-empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1rem;
+}
+
 /* ==========================================================================
    📓 4. DRAFTS PAGE STYLING
    ========================================================================== */
@@ -1176,6 +1320,35 @@ h1, h2, h3, h4 {
   text-transform: uppercase;
   margin-bottom: 0.5rem;
   letter-spacing: 0.05em;
+}
+
+.notebook-empty-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+}
+
+body.dark-mode .notebook-empty-page {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.notebook-empty-text {
+  font-size: 1.85rem;
+  color: var(--script-color);
+  line-height: 1.35;
+  margin-bottom: 0.5rem;
+}
+
+.notebook-empty-subtext {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  font-family: var(--font-sans);
 }
 
 /* ==========================================================================
