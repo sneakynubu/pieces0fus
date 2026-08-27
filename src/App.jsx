@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { supabase } from './supabaseClient'
 import soundtrackImg from './images/Soundtracks.jpg'
 import chaosImg from './images/Chaos.jpg'
@@ -10,6 +12,8 @@ import track3 from './audio/perfect.mp3'
 import track4 from './audio/sweet.mp3'
 import track5 from './audio/tothebone.mp3'
 import track6 from './audio/untilyou.mp3'
+
+gsap.registerPlugin(ScrollTrigger)
 
 const songPlaylist = [
   { 
@@ -95,6 +99,7 @@ const App = () => {
   const [loginPassword, setLoginPassword] = useState("")
   const [loginError, setLoginError] = useState("")
   const [loginSubmitting, setLoginSubmitting] = useState(false)
+  const loginBoxRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -108,6 +113,17 @@ const App = () => {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // ✨ GSAP: soft entrance for the login card
+  useEffect(() => {
+    if (!authLoading && !session && loginBoxRef.current) {
+      gsap.fromTo(
+        loginBoxRef.current,
+        { opacity: 0, y: 20, scale: 0.97 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' }
+      )
+    }
+  }, [authLoading, session])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -263,6 +279,18 @@ const App = () => {
     fetchChaosNotes()
   }, [session])
 
+  // ✨ GSAP: stagger the board in once it finishes loading
+  useEffect(() => {
+    if (!chaosLoading && boardItems.length > 0) {
+      gsap.fromTo(
+        '.board-item',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: 'power2.out' }
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaosLoading])
+
   const handleDeleteNote = async (id) => {
     setDeletingIds((prev) => [...prev, id])
     setTimeout(async () => {
@@ -301,6 +329,18 @@ const App = () => {
     setBoardItems([optimisticNote, ...boardItems])
     setNewNoteText("")
 
+    // ✨ GSAP: little pop-in for the newly pinned note
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.board-item')
+      if (el) {
+        gsap.fromTo(
+          el,
+          { opacity: 0, scale: 0.7 },
+          { opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.8)' }
+        )
+      }
+    })
+
     try {
       const { data, error } = await supabase
         .from('chaos_notes')
@@ -332,6 +372,7 @@ const App = () => {
   const [newSweetNote, setNewSweetNote] = useState("")
   const [isDroppingNote, setIsDroppingNote] = useState(false)
   const [dropSuccessMsg, setDropSuccessMsg] = useState("")
+  const jarCounterRef = useRef(null)
 
   useEffect(() => {
     if (!session) return
@@ -353,6 +394,17 @@ const App = () => {
 
     fetchSweets()
   }, [session])
+
+  // ✨ GSAP: gentle pulse on the jar counter whenever it changes
+  useEffect(() => {
+    if (jarCounterRef.current) {
+      gsap.fromTo(
+        jarCounterRef.current,
+        { opacity: 0, y: 6 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
+      )
+    }
+  }, [jarNotes.length])
 
   const handleDrawNote = () => {
     setIsFlipped(true)
@@ -404,8 +456,6 @@ const App = () => {
   const [brushSize, setBrushSize] = useState(3)
   const [canvasHistory, setCanvasHistory] = useState([]) // array of imageData URLs for undo
 
-  // 🔧 FIX: sketches now live in Supabase (drafts_entries), not localStorage,
-  // so both of you see the same saved sketches from any device.
   const [savedSketches, setSavedSketches] = useState([])
   const [sketchesLoading, setSketchesLoading] = useState(true)
   const [savingSketch, setSavingSketch] = useState(false)
@@ -439,6 +489,18 @@ const App = () => {
 
     fetchSketches()
   }, [session])
+
+  // ✨ GSAP: stagger saved sketches in once they finish loading
+  useEffect(() => {
+    if (!sketchesLoading && savedSketches.length > 0) {
+      gsap.fromTo(
+        '.sketch-item',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5, stagger: 0.06, ease: 'power2.out' }
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sketchesLoading])
 
   const PALETTE_COLORS = [
     { label: 'Charcoal Ink', value: '#2E2A27' },
@@ -534,8 +596,6 @@ const App = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
 
-  // 🔧 FIX: now async — flattens the canvas, then inserts it into the
-  // shared `drafts_entries` table in Supabase instead of localStorage.
   const handleSaveSketch = async () => {
     const canvas = sketchCanvasRef.current
     if (!canvas) return
@@ -557,6 +617,18 @@ const App = () => {
     // Optimistic local add so it feels instant
     const optimisticId = `temp-${Date.now()}`
     setSavedSketches((prev) => [{ id: optimisticId, dataUrl, date: dateLabel }, ...prev])
+
+    // ✨ GSAP: pop-in for the newly saved sketch
+    requestAnimationFrame(() => {
+      const el = document.querySelector('.sketch-item')
+      if (el) {
+        gsap.fromTo(
+          el,
+          { opacity: 0, scale: 0.85 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }
+        )
+      }
+    })
 
     // Clear the canvas right away
     const ctx = canvas.getContext('2d')
@@ -588,7 +660,6 @@ const App = () => {
     }
   }
 
-  // 🔧 FIX: now deletes from Supabase, not localStorage
   const handleDeleteSketch = async (id) => {
     setSavedSketches((prev) => prev.filter((s) => s.id !== id))
     try {
@@ -618,6 +689,71 @@ const App = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // ✨ GSAP: refs + effects for the homepage hero and page-level transitions
+  const pageContentRef = useRef(null)
+  const heroLabelRef = useRef(null)
+  const heroTitleRef = useRef(null)
+  const heroSubtitleRef = useRef(null)
+
+  // Soft fade + rise whenever the visible page changes
+  useEffect(() => {
+    if (!session || authLoading) return
+    if (pageContentRef.current) {
+      gsap.fromTo(
+        pageContentRef.current,
+        { opacity: 0, y: 14 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }
+      )
+    }
+  }, [currentPage, session, authLoading])
+
+  // Hero entrance, only on the homepage
+  useEffect(() => {
+    if (currentPage !== 'home' || !session) return
+    const tl = gsap.timeline({ defaults: { ease: 'power2.out' } })
+    tl.fromTo(heroLabelRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 })
+      .fromTo(heroTitleRef.current, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.55 }, '-=0.2')
+      .fromTo(heroSubtitleRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.3')
+  }, [currentPage, session])
+
+  // Scroll-reveal for each chapter section on the homepage
+  useEffect(() => {
+    if (currentPage !== 'home' || !session) return
+
+    const sections = gsap.utils.toArray('.chapter-section')
+    const tweens = sections.map((section) =>
+      gsap.fromTo(
+        section,
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.8,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: section,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse'
+          }
+        }
+      )
+    )
+
+    return () => {
+      tweens.forEach((tw) => tw.scrollTrigger && tw.scrollTrigger.kill())
+    }
+  }, [currentPage, session])
+
+  // Stagger the song cards in when landing on the Songs page
+  useEffect(() => {
+    if (currentPage !== 'songs' || !session) return
+    gsap.fromTo(
+      '.song-card',
+      { opacity: 0, y: 24 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out' }
+    )
+  }, [currentPage, session])
+
   // 🔐 Auth loading state — avoid flashing login screen before session check resolves
   if (authLoading) {
     return (
@@ -631,7 +767,7 @@ const App = () => {
   if (!session) {
     return (
       <div className="scrapbook-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem' }}>
-        <div style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
+        <div ref={loginBoxRef} style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
           <div className="label-caps" style={{ marginBottom: '1rem' }}>Private Archive</div>
           <h1 className="header-title" style={{ fontSize: '2.75rem', marginBottom: '0.5rem' }}>Pieces of Us</h1>
           <p className="header-subtitle" style={{ marginBottom: '2.5rem' }}>
@@ -755,13 +891,16 @@ const App = () => {
         </svg>
       </div>
 
+      {/* ✨ GSAP: wrapping page content so it can fade/rise on every navigation */}
+      <div ref={pageContentRef} key={currentPage}>
+
       {/* 🏡 0. HOMEPAGE SCREEN */}
       {currentPage === 'home' && (
         <>
           <header className="main-header">
-            <div className="label-caps" style={{ marginBottom: '1rem' }}>Harvey & Mony</div>
-            <h1 className="header-title">Pieces of Us</h1>
-            <p className="header-subtitle">
+            <div ref={heroLabelRef} className="label-caps" style={{ marginBottom: '1rem' }}>Harvey & Mony</div>
+            <h1 ref={heroTitleRef} className="header-title">Pieces of Us</h1>
+            <p ref={heroSubtitleRef} className="header-subtitle">
               "A digital collection of quiet moments, handwritten scraps, and late-night soundtracks."
             </p>
           </header>
@@ -1448,7 +1587,7 @@ const App = () => {
                 required
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                <span className="sweet-jar-counter">
+                <span ref={jarCounterRef} className="sweet-jar-counter">
                   {jarNotes.length > 0
                     ? `${jarNotes.length} note${jarNotes.length === 1 ? '' : 's'} in the jar`
                     : 'The jar is empty — be the first to drop one in'}
@@ -1634,6 +1773,9 @@ const App = () => {
 
         </div>
       )}
+
+      </div>
+      {/* end ✨ page-content wrapper */}
 
 
       {/* Consistent Footer */}
