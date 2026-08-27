@@ -403,13 +403,42 @@ const App = () => {
   const [brushColor, setBrushColor] = useState('#2E2A27')
   const [brushSize, setBrushSize] = useState(3)
   const [canvasHistory, setCanvasHistory] = useState([]) // array of imageData URLs for undo
-  const [savedSketches, setSavedSketches] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('drafts_sketches') || '[]')
-    } catch {
-      return []
+
+  // 🔧 FIX: sketches now live in Supabase (drafts_entries), not localStorage,
+  // so both of you see the same saved sketches from any device.
+  const [savedSketches, setSavedSketches] = useState([])
+  const [sketchesLoading, setSketchesLoading] = useState(true)
+  const [savingSketch, setSavingSketch] = useState(false)
+
+  useEffect(() => {
+    if (!session) return
+
+    const fetchSketches = async () => {
+      setSketchesLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('drafts_entries')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (error) throw error
+
+        const mapped = (data || []).map((row) => ({
+          id: row.id,
+          dataUrl: row.text,
+          date: row.date_label
+        }))
+
+        setSavedSketches(mapped)
+      } catch (err) {
+        console.error("Failed to fetch saved sketches:", err)
+      } finally {
+        setSketchesLoading(false)
+      }
     }
-  })
+
+    fetchSketches()
+  }, [session])
 
   const PALETTE_COLORS = [
     { label: 'Charcoal Ink', value: '#2E2A27' },
@@ -505,9 +534,14 @@ const App = () => {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
 
-  const handleSaveSketch = () => {
+  // 🔧 FIX: now async — flattens the canvas, then inserts it into the
+  // shared `drafts_entries` table in Supabase instead of localStorage.
+  const handleSaveSketch = async () => {
     const canvas = sketchCanvasRef.current
     if (!canvas) return
+
+    setSavingSketch(true)
+
     // Flatten onto white background for saving
     const offscreen = document.createElement('canvas')
     offscreen.width = canvas.width
@@ -517,24 +551,52 @@ const App = () => {
     oc.fillRect(0, 0, offscreen.width, offscreen.height)
     oc.drawImage(canvas, 0, 0)
     const dataUrl = offscreen.toDataURL('image/jpeg', 0.8)
-    const sketch = {
-      id: Date.now(),
-      dataUrl,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' })
-    }
-    const updated = [sketch, ...savedSketches]
-    setSavedSketches(updated)
-    localStorage.setItem('drafts_sketches', JSON.stringify(updated))
-    // Clear the canvas after saving
+
+    const dateLabel = new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' })
+
+    // Optimistic local add so it feels instant
+    const optimisticId = `temp-${Date.now()}`
+    setSavedSketches((prev) => [{ id: optimisticId, dataUrl, date: dateLabel }, ...prev])
+
+    // Clear the canvas right away
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     setCanvasHistory([])
+
+    try {
+      const { data, error } = await supabase
+        .from('drafts_entries')
+        .insert({
+          page: 'left', // fixed value — this view no longer splits left/right pages
+          date_label: dateLabel,
+          stamp: 'sketch',
+          text: dataUrl
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Swap the optimistic temp id for the real Supabase id
+      setSavedSketches((prev) =>
+        prev.map((s) => (s.id === optimisticId ? { ...s, id: data.id } : s))
+      )
+    } catch (err) {
+      console.error("Failed to save sketch to Supabase:", err)
+    } finally {
+      setSavingSketch(false)
+    }
   }
 
-  const handleDeleteSketch = (id) => {
-    const updated = savedSketches.filter(s => s.id !== id)
-    setSavedSketches(updated)
-    localStorage.setItem('drafts_sketches', JSON.stringify(updated))
+  // 🔧 FIX: now deletes from Supabase, not localStorage
+  const handleDeleteSketch = async (id) => {
+    setSavedSketches((prev) => prev.filter((s) => s.id !== id))
+    try {
+      const { error } = await supabase.from('drafts_entries').delete().eq('id', id)
+      if (error) throw error
+    } catch (err) {
+      console.error("Failed to delete sketch:", err)
+    }
   }
 
   // Initialize canvas on mount / when drafts page is shown
@@ -1508,12 +1570,13 @@ const App = () => {
                 <button
                   className="tool-button save-btn"
                   onClick={handleSaveSketch}
+                  disabled={savingSketch}
                   title="Save to Notebook"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
                   </svg>
-                  <span>Save to Notebook</span>
+                  <span>{savingSketch ? 'Saving...' : 'Save to Notebook'}</span>
                 </button>
               </div>
 
@@ -1536,30 +1599,37 @@ const App = () => {
           </div>
 
           {/* Saved Sketches in Notebook Spread */}
-          {savedSketches.length > 0 && (
-            <>
-              <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
-              <div className="label-caps" style={{ textAlign: 'center', marginBottom: '2rem' }}>Saved sketches</div>
-              <div className="sketch-grid">
-                {savedSketches.map((sketch) => (
-                  <div key={sketch.id} className="sketch-item">
-                    <button
-                      className="note-delete-btn"
-                      onClick={() => handleDeleteSketch(sketch.id)}
-                      title="Remove sketch"
-                      aria-label="Remove sketch"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                      </svg>
-                    </button>
-                    <img src={sketch.dataUrl} alt="Saved sketch" className="sketch-img" />
-                    <div className="sketch-stamp">{sketch.date}</div>
-                  </div>
-                ))}
-              </div>
-            </>
+          <div style={{ borderTop: '2px dotted var(--bone)', margin: '3rem 0' }}></div>
+          <div className="label-caps" style={{ textAlign: 'center', marginBottom: '2rem' }}>Saved sketches</div>
+
+          {sketchesLoading ? (
+            <p className="script-text" style={{ textAlign: 'center', fontSize: '1.3rem', color: 'var(--highlight)' }}>
+              Loading the notebook...
+            </p>
+          ) : savedSketches.length === 0 ? (
+            <p className="script-text" style={{ textAlign: 'center', fontSize: '1.3rem', color: 'var(--muted-text)' }}>
+              "This notebook is still blank... draw something above."
+            </p>
+          ) : (
+            <div className="sketch-grid">
+              {savedSketches.map((sketch) => (
+                <div key={sketch.id} className="sketch-item">
+                  <button
+                    className="note-delete-btn"
+                    onClick={() => handleDeleteSketch(sketch.id)}
+                    title="Remove sketch"
+                    aria-label="Remove sketch"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                  <img src={sketch.dataUrl} alt="Saved sketch" className="sketch-img" />
+                  <div className="sketch-stamp">{sketch.date}</div>
+                </div>
+              ))}
+            </div>
           )}
 
         </div>
